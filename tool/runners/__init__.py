@@ -10,12 +10,12 @@ from tool.runners.java import SubmissionJava
 from tool.runners.node import SubmissionNode
 from tool.runners.deno import SubmissionDeno
 from tool.runners.deno_ts import SubmissionDenoTS
-from tool.runners.nim import SubmissionNim
+# from tool.runners.nim import SubmissionNim
 from tool.runners.cython_aoc import SubmissionPyx
 from tool.runners.python import SubmissionPy
 from tool.runners.ruby import SubmissionRb
 from tool.runners.rust import SubmissionRs
-from tool.runners.ocaml import SubmissionOCaml
+# from tool.runners.ocaml import SubmissionOCaml
 from tool.runners.ts import SubmissionTs
 from tool.runners.wrapper import SubmissionWrapper
 from tool.runners.julia import SubmissionJulia
@@ -82,10 +82,10 @@ def load_submission_runnable(path, language):
         return SubmissionBash(path)
     elif language == "jl":
         return SubmissionJulia(path)
-    elif language == "nim":
-        return SubmissionNim(path)
-    elif language == "ml":
-        return SubmissionOCaml(path)
+    # elif language == "nim":
+    #     return SubmissionNim(path)
+    # elif language == "ml":
+    #     return SubmissionOCaml(path)
     elif language == "ts":
         return SubmissionTs(path)
     elif language == "v":
