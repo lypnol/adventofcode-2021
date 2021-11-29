@@ -12,7 +12,7 @@ These are proposed solutions for the [Advent of Code 2021](http://adventofcode.c
 
 The solutions are automatically tested with github-actions.
 
-[![Build Status](https://github.com/david-ds/adventofcode-2021/workflows/CI/badge.svg)](https://github.com/david-ds/adventofcode-2021/actions?query=branch%3Amaster)
+[![Build Status](https://github.com/lypnol/adventofcode-2021/workflows/CI/badge.svg)](https://github.com/lypnol/adventofcode-2021/actions?query=branch%3Amaster)
 
 - [Usage](#usage)
   - [Installation](#installation)
@@ -205,7 +205,7 @@ npm install -g esy
 ```
 ## History
 
-- [Advent of Code 2020](https://github.com/david-ds/adventofcode-2020)
+- [Advent of Code 2020](https://github.com/lypnol/adventofcode-2020)
 - [Advent of Code 2019](https://github.com/lypnol/adventofcode-2019)
 - [Advent of Code 2018](https://github.com/badouralix/advent-of-code-2018)
 - [Advent of Code 2017](https://github.com/lypnol/adventofcode-2017)
