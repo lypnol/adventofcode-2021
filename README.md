@@ -205,7 +205,7 @@ npm install -g esy
 ```
 ## History
 
-- [Advent of Code 2020](https://github.com/lypnol/adventofcode-2020)
+- [Advent of Code 2020](https://github.com/david-ds/adventofcode-2020)
 - [Advent of Code 2019](https://github.com/lypnol/adventofcode-2019)
 - [Advent of Code 2018](https://github.com/badouralix/advent-of-code-2018)
 - [Advent of Code 2017](https://github.com/lypnol/adventofcode-2017)
