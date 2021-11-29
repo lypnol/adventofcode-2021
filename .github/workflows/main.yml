@@ -20,9 +20,9 @@ jobs:
       - uses: denolib/setup-deno@v2
         with:
           deno-version: v0.x
-      - uses: jiro4989/setup-nim-action@v1
-        with:
-          nim-version: 1.4.8
+      # - uses: jiro4989/setup-nim-action@v1
+      #   with:
+      #     nim-version: 1.4.8
       - uses: goto-bus-stop/setup-zig@v1
         with:
           version: 0.7.0
