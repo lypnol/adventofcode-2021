@@ -1,0 +1,307 @@
+[package]
+name = "adventofcode-2021"
+version = "0.1.0"
+authors = []
+edition="2018"
+
+[dependencies]
+
+# enizor
+
+[[bin]]
+name = "day-01-part-1-enizor"
+path = "./day-01/part-1/enizor.rs"
+
+[[bin]]
+name = "day-01-part-2-enizor"
+path = "./day-01/part-2/enizor.rs"
+
+[[bin]]
+name = "day-02-part-1-enizor"
+path = "./day-02/part-1/enizor.rs"
+
+[[bin]]
+name = "day-02-part-2-enizor"
+path = "./day-02/part-2/enizor.rs"
+
+[[bin]]
+name = "day-03-part-1-enizor"
+path = "./day-03/part-1/enizor.rs"
+
+[[bin]]
+name = "day-03-part-2-enizor"
+path = "./day-03/part-2/enizor.rs"
+
+[[bin]]
+name = "day-04-part-1-enizor"
+path = "./day-04/part-1/enizor.rs"
+
+[[bin]]
+name = "day-04-part-2-enizor"
+path = "./day-04/part-2/enizor.rs"
+
+[[bin]]
+name = "day-05-part-1-enizor"
+path = "./day-05/part-1/enizor.rs"
+
+[[bin]]
+name = "day-05-part-2-enizor"
+path = "./day-05/part-2/enizor.rs"
+
+[[bin]]
+name = "day-06-part-1-enizor"
+path = "./day-06/part-1/enizor.rs"
+
+[[bin]]
+name = "day-06-part-2-enizor"
+path = "./day-06/part-2/enizor.rs"
+
+[[bin]]
+name = "day-07-part-1-enizor"
+path = "./day-07/part-1/enizor.rs"
+
+[[bin]]
+name = "day-07-part-2-enizor"
+path = "./day-07/part-2/enizor.rs"
+
+[[bin]]
+name = "day-08-part-1-enizor"
+path = "./day-08/part-1/enizor.rs"
+
+[[bin]]
+name = "day-08-part-2-enizor"
+path = "./day-08/part-2/enizor.rs"
+
+[[bin]]
+name = "day-09-part-1-enizor"
+path = "./day-09/part-1/enizor.rs"
+
+[[bin]]
+name = "day-09-part-2-enizor"
+path = "./day-09/part-2/enizor.rs"
+
+[[bin]]
+name = "day-10-part-1-enizor"
+path = "./day-10/part-1/enizor.rs"
+
+[[bin]]
+name = "day-10-part-2-enizor"
+path = "./day-10/part-2/enizor.rs"
+
+[[bin]]
+name = "day-11-part-1-enizor"
+path = "./day-11/part-1/enizor.rs"
+
+[[bin]]
+name = "day-11-part-2-enizor"
+path = "./day-11/part-2/enizor.rs"
+
+[[bin]]
+name = "day-12-part-1-enizor"
+path = "./day-12/part-1/enizor.rs"
+
+[[bin]]
+name = "day-12-part-2-enizor"
+path = "./day-12/part-2/enizor.rs"
+
+[[bin]]
+name = "day-13-part-1-enizor"
+path = "./day-13/part-1/enizor.rs"
+
+[[bin]]
+name = "day-13-part-2-enizor"
+path = "./day-13/part-2/enizor.rs"
+
+[[bin]]
+name = "day-14-part-1-enizor"
+path = "./day-14/part-1/enizor.rs"
+
+[[bin]]
+name = "day-14-part-2-enizor"
+path = "./day-14/part-2/enizor.rs"
+
+[[bin]]
+name = "day-15-part-1-enizor"
+path = "./day-15/part-1/enizor.rs"
+
+[[bin]]
+name = "day-15-part-2-enizor"
+path = "./day-15/part-2/enizor.rs"
+
+[[bin]]
+name = "day-16-part-1-enizor"
+path = "./day-16/part-1/enizor.rs"
+
+[[bin]]
+name = "day-16-part-2-enizor"
+path = "./day-16/part-2/enizor.rs"
+
+[[bin]]
+name = "day-17-part-1-enizor"
+path = "./day-17/part-1/enizor.rs"
+
+[[bin]]
+name = "day-17-part-2-enizor"
+path = "./day-17/part-2/enizor.rs"
+
+[[bin]]
+name = "day-18-part-1-enizor"
+path = "./day-18/part-1/enizor.rs"
+
+[[bin]]
+name = "day-18-part-2-enizor"
+path = "./day-18/part-2/enizor.rs"
+
+[[bin]]
+name = "day-19-part-1-enizor"
+path = "./day-19/part-1/enizor.rs"
+
+[[bin]]
+name = "day-19-part-2-enizor"
+path = "./day-19/part-2/enizor.rs"
+
+[[bin]]
+name = "day-20-part-1-enizor"
+path = "./day-20/part-1/enizor.rs"
+
+[[bin]]
+name = "day-20-part-2-enizor"
+path = "./day-20/part-2/enizor.rs"
+
+# jd
+
+[[bin]]
+name = "day-01-part-1-jd"
+path = "./day-01/part-1/jd.rs"
+
+[[bin]]
+name = "day-01-part-2-jd"
+path = "./day-01/part-2/jd.rs"
+
+[[bin]]
+name = "day-02-part-1-jd"
+path = "./day-02/part-1/jd.rs"
+
+[[bin]]
+name = "day-02-part-2-jd"
+path = "./day-02/part-2/jd.rs"
+
+[[bin]]
+name = "day-03-part-1-jd"
+path = "./day-03/part-1/jd.rs"
+
+[[bin]]
+name = "day-03-part-2-jd"
+path = "./day-03/part-2/jd.rs"
+
+[[bin]]
+name = "day-04-part-1-jd"
+path = "./day-04/part-1/jd.rs"
+
+[[bin]]
+name = "day-04-part-2-jd"
+path = "./day-04/part-2/jd.rs"
+
+[[bin]]
+name = "day-05-part-1-jd"
+path = "./day-05/part-1/jd.rs"
+
+[[bin]]
+name = "day-05-part-2-jd"
+path = "./day-05/part-2/jd.rs"
+
+[[bin]]
+name = "day-06-part-1-jd"
+path = "./day-06/part-1/jd.rs"
+
+[[bin]]
+name = "day-06-part-2-jd"
+path = "./day-06/part-2/jd.rs"
+
+[[bin]]
+name = "day-07-part-1-jd"
+path = "./day-07/part-1/jd.rs"
+
+[[bin]]
+name = "day-07-part-2-jd"
+path = "./day-07/part-2/jd.rs"
+
+[[bin]]
+name = "day-08-part-1-jd"
+path = "./day-08/part-1/jd.rs"
+
+[[bin]]
+name = "day-08-part-2-jd"
+path = "./day-08/part-2/jd.rs"
+
+[[bin]]
+name = "day-09-part-1-jd"
+path = "./day-09/part-1/jd.rs"
+
+[[bin]]
+name = "day-09-part-2-jd"
+path = "./day-09/part-2/jd.rs"
+
+[[bin]]
+name = "day-10-part-1-jd"
+path = "./day-10/part-1/jd.rs"
+
+[[bin]]
+name = "day-10-part-2-jd"
+path = "./day-10/part-2/jd.rs"
+
+[[bin]]
+name = "day-11-part-1-jd"
+path = "./day-11/part-1/jd.rs"
+
+[[bin]]
+name = "day-11-part-2-jd"
+path = "./day-11/part-2/jd.rs"
+
+[[bin]]
+name = "day-12-part-1-jd"
+path = "./day-12/part-1/jd.rs"
+
+[[bin]]
+name = "day-12-part-2-jd"
+path = "./day-12/part-2/jd.rs"
+
+[[bin]]
+name = "day-13-part-1-jd"
+path = "./day-13/part-1/jd.rs"
+
+[[bin]]
+name = "day-13-part-2-jd"
+path = "./day-13/part-2/jd.rs"
+
+[[bin]]
+name = "day-15-part-1-giltho"
+path = "./day-15/part-1/giltho.rs"
+
+[[bin]]
+name = "day-15-part-2-giltho"
+path = "./day-15/part-2/giltho.rs"
+
+[[bin]]
+name = "day-16-part-1-giltho"
+path = "./day-16/part-1/giltho.rs"
+
+[[bin]]
+name = "day-16-part-2-giltho"
+path = "./day-16/part-2/giltho.rs"
+
+[[bin]]
+name = "day-17-part-1-giltho"
+path = "./day-17/part-1/giltho.rs"
+
+[[bin]]
+name = "day-17-part-2-giltho"
+path = "./day-17/part-2/giltho.rs"
+
+[[bin]]
+name = "day-19-part-1-giltho"
+path = "./day-19/part-1/giltho.rs"
+
+[[bin]]
+name = "day-19-part-2-giltho"
+path = "./day-19/part-2/giltho.rs"

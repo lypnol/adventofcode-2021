@@ -1,0 +1,39 @@
+{
+  "name": "adventofcode-2021",
+  "version": "0.1.0",
+  "description": "repository of proposed solutions to Advent Of Code 2021 edition",
+  "private": true,
+  "esy": {
+    "build": "dune build",
+    "buildsInSource": "_build"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/david-ds/adventofcode-2021.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/david-ds/adventofcode-2021/issues"
+  },
+  "homepage": "https://github.com/david-ds/adventofcode-2021#readme",
+  "dependencies": {
+    "@opam/dune": "*",
+    "@opam/angstrom": "*",
+    "@opam/ppx_deriving": "*",
+    "@opam/fmt": "*",
+    "@opam/stdio": "*",
+    "ocaml": "4.11.1000"
+  },
+  "resolutions": {
+    "ocaml": "esy-ocaml/ocaml#c72768d"
+  },
+  "devDependencies": {
+    "ocaml": "4.11.1000",
+    "@opam/ocaml-lsp-server": "*",
+    "@opam/ocamlformat": "0.15.1"
+  }
+}
