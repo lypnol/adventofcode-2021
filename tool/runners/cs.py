@@ -10,7 +10,7 @@ from tool.runners.wrapper import SubmissionWrapper
 class SubmissionCs(SubmissionWrapper):
     def __init__(self, file):
         SubmissionWrapper.__init__(self)
-        # Create a temporary directory to put the compiled java in,
+        # Create a temporary directory to put the compiled C# in,
         # in order to have it destroyed once we are done
         self.temporary_directory = tempfile.mkdtemp(prefix="aoc")
         try:
