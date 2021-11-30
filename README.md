@@ -35,7 +35,7 @@ The solutions are automatically tested with github-actions.
 
 use `./aoc` script
 
-```
+```text
 usage: aoc <command> [<args>]
 
 aoc commands are:
@@ -58,11 +58,11 @@ pip install -r requirements.txt
 
 #### Run last problem
 
-```
+```bash
 ./aoc run
 ```
 
-```
+```text
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Running submissions for day 04:
 
@@ -85,11 +85,11 @@ tpxp           41668      133.63 ms  rb
 
 #### Run specific problems from specific users
 
-```
+```bash
 ./aoc run -d 1 -d 2 -p 1 -a ayoub -a david
 ```
 
-```
+```text
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Running submissions for day 01:
 
@@ -131,7 +131,7 @@ For now we support `c`, `c++`, `java`, `javascript` (with node and deno), `types
 
 You can use `./aoc create` tool to create a new empty submission:
 
-```
+```text
 usage: aoc create [-h] [-a AUTHOR] [-d DAY] [-p PART]
                   [-l {c,cpp,go,intcode,java,js,deno.js,deno.ts,ml,nim,py,pyx,rb,rs,sh,v,zig}]
 
@@ -148,7 +148,7 @@ optional arguments:
 
 you can also use `./aoc config` to setup your local profile
 
-```
+```text
 usage: aoc config [-h] username {c,cpp,go,intcode,java,js,deno.js,deno.ts,ml,nim,py,pyx,rb,rs,sh,v,zig}
 
 Configures user parameters
@@ -163,7 +163,7 @@ positional arguments:
 
 If you don't use `./aoc create` tool you should follow this convention:
 
-```
+```text
 day-[number]/part-[number]/[username].py    # your submission code
 day-[number]/input/[username].txt           # your input file
 ```
@@ -174,39 +174,50 @@ Your submission code should follow templates written in the `tool/templates/` fo
 
 ### Go
 
-`brew install go`
+```bash
+brew install go
+```
 
 ### Rust
 
-Follow: https://www.rust-lang.org/tools/install
+Follow: <https://www.rust-lang.org/tools/install>
 
 ### Node
 
-`brew install node`
+```bash
+brew install node
+```
 
 ### Deno
 
-`brew install deno`
+```bash
+brew install deno
+```
 
 or
 
-`curl -fsSL https://deno.land/x/install/install.sh | sh`
+```bash
+curl -fsSL https://deno.land/x/install/install.sh | sh
+```
 
 ### Nim
 
-`brew install nim`
+```bash
+brew install nim
+```
 
 ### OCaml
 
 install esy, esy will take care of installing ocaml and building the dependencies on the first execution (might take a while)
 
-```
+```bash
 npm install -g esy
 ```
+
 ## History
 
 - [Advent of Code 2020](https://github.com/david-ds/adventofcode-2020)
 - [Advent of Code 2019](https://github.com/lypnol/adventofcode-2019)
-- [Advent of Code 2018](https://github.com/badouralix/advent-of-code-2018)
+- [Advent of Code 2018](https://github.com/badouralix/adventofcode-2018)
 - [Advent of Code 2017](https://github.com/lypnol/adventofcode-2017)
 - [Advent of Code 2016](https://github.com/lypnol/adventofcode-2016)
