@@ -28,6 +28,8 @@ class SubmissionCs(SubmissionWrapper):
                     "run", 
                     "--project", 
                     os.path.join(self.temporary_directory, "aoc.csproj"),
+                    "--property", "BaseIntermediateOutputPath=" + self.temporary_directory + "/obj/",
+                    "--property", "BaseOutputPath=" + self.temporary_directory + "/bin/",
                     "--",
                     input
                 ]
