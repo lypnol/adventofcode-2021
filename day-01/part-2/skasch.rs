@@ -10,15 +10,15 @@ fn main() {
 }
 
 fn parse<'a>(input: &'a str) -> impl Iterator<Item = isize> + Clone + 'a {
-    input.lines().filter_map(|l| l.parse::<isize>().ok())
+    input.lines().filter_map(|l| l.parse().ok())
 }
 
 fn run(input: &str) -> isize {
     // Your code goes here
     parse(input)
-        .fold((None, None, None, 0), |acc, val| match acc {
-            (x, y, None, t) => (Some(val), x, y, t),
-            (x, y, Some(z), t) => (Some(val), x, y, t + if z < val { 1 } else { 0 }),
+        .fold((None, None, None, 0), |(x, y, z, t), val| match z {
+            None => (Some(val), x, y, t),
+            Some(z) => (Some(val), x, y, t + if z < val { 1 } else { 0 }),
         })
         .3
 }
