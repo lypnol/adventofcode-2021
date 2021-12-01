@@ -11,7 +11,7 @@ class SubmissionIntcode:
         return "intcode"
 
     def run(self, input):
-        inputs = [int(v) for v in input.strip().split(",")]
+        inputs = [int(v) for v in input.strip().split()]
         out = compute(self.code, [len(inputs)] + inputs)
         return ",".join(str(v) for v in out)
 
