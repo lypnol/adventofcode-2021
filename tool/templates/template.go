@@ -15,10 +15,20 @@ func main() {
 	// Uncomment this line to disable garbage collection
 	// debug.SetGCPercent(-1)
 
-	// Read input from stdin
-	input, err := ioutil.ReadAll(os.Stdin)
-	if err != nil {
-		panic(err)
+	argsWithProg := os.Args
+	var input []byte
+	var err error
+	if len(argsWithProg) > 1 {
+		input,err = ioutil.ReadFile(argsWithProg[1])
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		// Read input from stdin
+		input, err = ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// Start resolution
