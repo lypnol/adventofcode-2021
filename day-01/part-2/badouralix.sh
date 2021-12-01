@@ -10,7 +10,7 @@ function run() {
     SHIFT=("${ARRAY[@]:$WINDOW}")
 
     # Return answer
-    wc -l <<< "$(for idx in "${!SHIFT[@]}"; do if [ "${SHIFT[$idx]}" -gt "${ARRAY[$idx]}" ]; then echo yolo; fi; done)"
+    for idx in "${!SHIFT[@]}"; do [ "${SHIFT[$idx]}" -gt "${ARRAY[$idx]}" ]; echo $?; done | grep -c "0"
 }
 
 echo "$(run)"
