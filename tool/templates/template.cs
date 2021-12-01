@@ -17,7 +17,7 @@ namespace Aoc
             watch.Start();
             string result = solve(input);
             watch.Stop();
-            Console.WriteLine("_duration: " + watch.ElapsedMilliseconds + "\n" + result);
+            Console.WriteLine("_duration: " + watch.Elapsed.TotalMilliseconds + "\n" + result);
         }
         
     }
