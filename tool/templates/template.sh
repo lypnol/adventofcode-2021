@@ -10,4 +10,4 @@ function run() {
     echo
 }
 
-echo $(run)
+echo "$(run)"
