@@ -4,11 +4,25 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 )
 
-func run(s string) interface{} {
-	// Your code goes here
+func run(s string) int {
+	measurements := strings.Split(s, "\n")
+	previous, _ := strconv.Atoi(measurements[0])
+	increases := 0
+
+	for _, m := range measurements[1:] {
+		current, _ := strconv.Atoi(m)
+		if previous < current {
+			increases++
+		}
+		previous = current
+	}
+
+	return increases
 }
 
 func main() {
