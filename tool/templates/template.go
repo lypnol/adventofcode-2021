@@ -26,6 +26,6 @@ func main() {
 	result := run(string(input))
 
 	// Print result
-	fmt.Printf("_duration:%f\n", time.Now().Sub(start).Seconds()*1000)
+	fmt.Printf("_duration:%f\n", time.Since(start).Seconds()*1000)
 	fmt.Println(result)
 }
