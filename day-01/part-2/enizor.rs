@@ -11,21 +11,14 @@ fn main() {
 
 fn run(input: &str) -> Option<usize> {
     let mut res = 0;
-    let mut lines = input.lines();
-    let mut window = [0u16; 4];
-    for depth in &mut window {
-        *depth = lines.next()?.parse().ok()?;
-    }
-    let mut offset = 3;
-    for line in lines {
+    let mut window = [usize::MAX; 4];
+    let mut offset = 0;
+    for line in input.lines() {
+        window[offset] = line.parse().ok()?;
         if window[offset] > window[(offset + 1) % 4] {
             res += 1;
         }
         offset = (offset + 1) % 4;
-        window[offset] = line.parse().ok()?;
-    }
-    if window[offset] > window[(offset + 1) % 4] {
-        res += 1;
     }
     Some(res)
 }

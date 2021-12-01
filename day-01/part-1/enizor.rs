@@ -11,10 +11,9 @@ fn main() {
 
 fn run(input: &str) -> Option<usize> {
     let mut res = 0;
-    let mut lines = input.lines();
-    let mut d1: usize = lines.next()?.parse().ok()?;
-    for line in lines {
-        let d2: usize = line.parse().expect("Invalid input!");
+    let mut d1: usize = usize::MAX;
+    for line in input.lines() {
+        let d2: usize = line.parse().ok()?;
         if d2 > d1 {
             res += 1;
         }
