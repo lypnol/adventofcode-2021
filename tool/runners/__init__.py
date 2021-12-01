@@ -13,6 +13,7 @@ from tool.runners.deno import SubmissionDeno
 from tool.runners.deno_ts import SubmissionDenoTS
 # from tool.runners.nim import SubmissionNim
 from tool.runners.cython_aoc import SubmissionPyx
+from tool.runners.php import SubmissionPHP
 from tool.runners.python import SubmissionPy
 from tool.runners.ruby import SubmissionRb
 from tool.runners.rust import SubmissionRs
@@ -37,6 +38,7 @@ TOOL_BY_LANGUAGE = {
     "ts": "./node_modules/.bin/ts-node",
     "nim": "nim",
     "ml": "dune",
+    "php": "php",
     "py": "python",
     "pyx": "cython",
     "rb": "ruby",
@@ -78,6 +80,8 @@ def load_submission_runnable(path, language):
         return SubmissionDeno(path)
     elif language == "deno.ts":
         return SubmissionDenoTS(path)
+    elif language == "php":
+        return SubmissionPHP(path)
     elif language == "rb":
         return SubmissionRb(path)
     elif language == "rs":
