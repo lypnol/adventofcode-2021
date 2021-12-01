@@ -125,7 +125,7 @@ You can add other functions & modules if you need to. Any external dependency sh
 
 Once you tested your solution you can submit it by making a PR and a GitHub action will check that your code generates the same outputs as others' code.
 
-For now we support `c`, `c++`, `java`, `javascript` (with node and deno), `typescript` (with deno) , `go`, `python 3` (+ `cython`), `ruby`, `rust (stable)`, `julia`, `bash`, `nim`, `v`,`zig` and `ocaml`scripts.
+For now we support `c`, `c++`, `java`, `javascript` (with node and deno), `typescript` (with deno) , `go`, `python 3` (+ `cython`), `ruby`, `rust (stable)`, `julia`, `bash`, `nim`, `v`,`zig`, `ocaml`scripts and `php`.
 
 ### New submission with aoc
 
@@ -133,7 +133,7 @@ You can use `./aoc create` tool to create a new empty submission:
 
 ```text
 usage: aoc create [-h] [-a AUTHOR] [-d DAY] [-p PART]
-                  [-l {c,cpp,go,intcode,java,js,deno.js,deno.ts,ml,nim,py,pyx,rb,rs,sh,v,zig}]
+                  [-l {c,cpp,go,intcode,java,js,deno.js,deno.ts,ml,nim,php,py,pyx,rb,rs,sh,v,zig}]
 
 Create a new submission
 
@@ -142,20 +142,20 @@ optional arguments:
                         submission author
   -d DAY, --day DAY     problem day
   -p PART, --part PART  problem part
-  -l {c,cpp,go,intcode,java,js,deno.js,deno.ts,ml,nim,py,pyx,rb,rs,sh,v,zig}, --language {c,cpp,go,intcode,java,js,deno.js,deno.ts,ml,nim,py,pyx,rb,rs,sh,v,zig}
+  -l {c,cpp,go,intcode,java,js,deno.js,deno.ts,ml,nim,php,py,pyx,rb,rs,sh,v,zig}, --language {c,cpp,go,intcode,java,js,deno.js,deno.ts,ml,nim,php,py,pyx,rb,rs,sh,v,zig}
                         submission language
 ```
 
 you can also use `./aoc config` to setup your local profile
 
 ```text
-usage: aoc config [-h] username {c,cpp,go,intcode,java,js,deno.js,deno.ts,ml,nim,py,pyx,rb,rs,sh,v,zig}
+usage: aoc config [-h] username {c,cpp,go,intcode,java,js,deno.js,deno.ts,ml,nim,php,py,pyx,rb,rs,sh,v,zig}
 
 Configures user parameters
 
 positional arguments:
   username              prefered username
-  {c,cpp,go,intcode,java,js,deno.js,deno.ts,ml,nim,py,pyx,rb,rs,sh,v,zig}
+  {c,cpp,go,intcode,java,js,deno.js,deno.ts,ml,nim,php,py,pyx,rb,rs,sh,v,zig}
                         prefered programming language
 ```
 
@@ -213,6 +213,11 @@ install esy, esy will take care of installing ocaml and building the dependencie
 ```bash
 npm install -g esy
 ```
+
+
+### PHP
+
+
 
 ## History
 
