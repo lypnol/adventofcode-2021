@@ -4,6 +4,7 @@
 from tool.runners.bash import SubmissionBash
 from tool.runners.c import SubmissionC
 from tool.runners.cpp import SubmissionCpp
+from tool.runners.cs import SubmissionCs
 from tool.runners.go import SubmissionGo
 from tool.runners.intcode import SubmissionIntcode
 from tool.runners.java import SubmissionJava
@@ -26,6 +27,7 @@ from tool.utils import load_subclass
 TOOL_BY_LANGUAGE = {
     "c": "gcc",
     "cpp": "g++",
+    "cs": "dotnet",
     "go": "go",
     "intcode": "python",
     "java": "java",
@@ -62,6 +64,8 @@ def load_submission_runnable(path, language):
         return SubmissionC(path)
     elif language == "cpp":
         return SubmissionCpp(path)
+    elif language == "cs":
+        return SubmissionCs(path)
     elif language == "go":
         return SubmissionGo(path)
     elif language == "intcode":
