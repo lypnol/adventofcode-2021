@@ -5,9 +5,8 @@
 
 using namespace std;
 
-int run(string s) {
+int run(char* s) {
     int count = 0;
-    int n = s.length();
     int i = 0;
     int j = 1;
     while (s[j] != '\n') {
@@ -16,7 +15,7 @@ int run(string s) {
     j++;
     int j_start = j;
     int increasing = 0;
-    while (j < n) {
+    while (s[j] != '\0') {
         char i_char = s[i];
         char j_char = s[j];
         if (i_char == '\n') {
@@ -73,7 +72,7 @@ int main(int argc, char** argv) {
     }
 
     clock_t start = clock();
-    auto answer = run(string(argv[1]));
+    auto answer = run((argv[1]));
 
     cout << "_duration:" << float( clock () - start ) * 1000.0 /  CLOCKS_PER_SEC << "\n";
     cout << answer << "\n";

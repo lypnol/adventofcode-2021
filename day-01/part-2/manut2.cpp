@@ -7,15 +7,15 @@
 
 using namespace std;
 
-int run(string s) {
+int run(char* s) {
     short int occurences = 0;
     short int previous[3] = {-1,-1,-1};
     short int moduloCount = 0;
     short int current = 0;
 
-    for (int i = 0; i < s.length(); i++) {
+    while(*s != '\0') {
         moduloCount = moduloCount % 3;
-        if (s[i] == '\n') {
+        if (*s == '\n') {
             if (previous[moduloCount] >= 0 && current > previous[moduloCount])
             {
                 occurences += 1;
@@ -25,8 +25,9 @@ int run(string s) {
             current = 0;
         }
         else {
-            current = current * 10 + s[i] - '0';
+            current = current * 10 + *s - '0';
         }
+        s++;
     }
     if (current > previous[moduloCount])
     {
@@ -42,9 +43,9 @@ int main(int argc, char** argv) {
     }
 
     clock_t start = clock();
-    int answer = run(string(argv[1]));
-
     cout << "_duration:" << float( clock () - start ) * 1000.0 /  CLOCKS_PER_SEC << "\n";
+    int answer = run(argv[1]);
+
     cout << answer << "\n";
     return 0;
 }
