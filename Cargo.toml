@@ -6,3 +6,13 @@ rust-version = "1.56"
 edition="2021"
 
 [dependencies]
+
+# Julien Doutre
+
+[[bin]]
+name = "day-01-part-1-juliendoutre"
+path = "./day-01/part-1/juliendoutre.rs"
+
+[[bin]]
+name = "day-01-part-2-juliendoutre"
+path = "./day-01/part-2/juliendoutre.rs"
