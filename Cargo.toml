@@ -6,3 +6,11 @@ rust-version = "1.56"
 edition="2021"
 
 [dependencies]
+
+[[bin]]
+name = "day-01-part-1-giltho"
+path = "./day-01/part-1/giltho.rs"
+
+[[bin]]
+name = "day-01-part-2-giltho"
+path = "./day-01/part-2/giltho.rs"
