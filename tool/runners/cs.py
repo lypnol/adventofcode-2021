@@ -13,23 +13,22 @@ class SubmissionCs(SubmissionWrapper):
         # Create a temporary directory to put the compiled C# in,
         # in order to have it destroyed once we are done
         self.temporary_directory = tempfile.mkdtemp(prefix="aoc")
-        try:
-            subprocess.run(["cp", "aoc.csproj", self.temporary_directory], check=True)
-            subprocess.run(["cp", file, self.temporary_directory], check=True)
-            subprocess.run(
-                [
-                    "dotnet", 
-                    "build", 
-                    os.path.join(self.temporary_directory, "aoc.csproj"), 
-                    "--output",
-                    os.path.join(self.temporary_directory, "bin")
-                ],
-                check=True,
-                stderr=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
-            )
-        except subprocess.CalledProcessError as e:
-            raise CompilationError(e)
+        subprocess.run(["cp", "aoc.csproj", self.temporary_directory], check=True)
+        subprocess.run(["cp", file, self.temporary_directory], check=True)
+        completed_process = subprocess.run(
+            [
+                "dotnet", 
+                "build", 
+                "--configuration", 
+                "Release",
+                os.path.join(self.temporary_directory, "aoc.csproj"), 
+                "--output",
+                os.path.join(self.temporary_directory, "bin")
+            ],
+            capture_output=True
+        )
+        if completed_process.returncode != 0:
+            raise CompilationError(completed_process.stdout.decode('unicode_escape'))
         self.executable = os.path.join(self.temporary_directory, "bin", "aoc")
         self.file = file
 
