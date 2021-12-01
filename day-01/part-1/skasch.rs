@@ -9,7 +9,7 @@ fn main() {
     println!("{}", output);
 }
 
-fn parse<'a>(input: &'a str) -> impl Iterator<Item = isize> + Clone + 'a {
+fn parse<'a>(input: &'a str) -> impl Iterator<Item = isize> + 'a {
     input.lines().filter_map(|l| l.parse::<isize>().ok())
 }
 
