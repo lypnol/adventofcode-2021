@@ -9,15 +9,22 @@ fn main() {
     println!("{}", output);
 }
 
-fn run(input: &str) -> isize {
-    let depths: Vec<isize> = input.lines().map(|x| x.parse().unwrap()).collect();
-    depths
-        .windows(3)
-        .map(|w| w.iter().sum())
-        .collect::<Vec<isize>>()
-        .windows(2)
-        .filter(|w| w[1] > w[0])
-        .count() as isize
+fn run(input: &str) -> usize {
+    let mut antepenultimate;
+    let (mut penultimate, mut previous, mut current) = (usize::MAX, usize::MAX, usize::MAX);
+    let mut result = 0;
+
+    for line in input.lines() {
+        antepenultimate = penultimate;
+        penultimate = previous;
+        previous = current;
+        current = line.parse::<usize>().unwrap();
+        if current > antepenultimate {
+            result += 1;
+        }
+    }
+
+    result
 }
 
 #[cfg(test)]

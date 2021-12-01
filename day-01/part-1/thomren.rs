@@ -9,9 +9,20 @@ fn main() {
     println!("{}", output);
 }
 
-fn run(input: &str) -> isize {
-    let depths: Vec<isize> = input.lines().map(|x| x.parse().unwrap()).collect();
-    depths.windows(2).filter(|w| w[1] > w[0]).count() as isize
+fn run(input: &str) -> usize {
+    let mut prev_depth;
+    let mut cur_depth = usize::MAX;
+    let mut result = 0;
+
+    for line in input.lines() {
+        prev_depth = cur_depth;
+        cur_depth = line.parse::<usize>().unwrap();
+        if cur_depth > prev_depth {
+            result += 1;
+        }
+    }
+
+    result
 }
 
 #[cfg(test)]
