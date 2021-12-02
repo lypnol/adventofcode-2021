@@ -1,27 +1,20 @@
 #include <vector>
 #include <iostream>
 #include <string>
-#include <ctime>
+#include <chrono>
 
 // Optimizin quentin's solutions
 
 using namespace std;
 
 int run(char* s) {
-    short int occurences = 0;
-    short int previous[3] = {-1,-1,-1};
-    short int moduloCount = 0;
-    short int current = 0;
-
-    while(*s != '\0') {
-        moduloCount = moduloCount % 3;
+    int occurences = 0;
+    int previous[3];
+    int moduloCount = 0;
+    int current = 0;
+    while (moduloCount < 3) {
         if (*s == '\n') {
-            if (previous[moduloCount] >= 0 && current > previous[moduloCount])
-            {
-                occurences += 1;
-            }
-            previous[moduloCount] = current;
-            moduloCount++;
+            previous[moduloCount++] = current;
             current = 0;
         }
         else {
@@ -29,10 +22,24 @@ int run(char* s) {
         }
         s++;
     }
-    if (current > previous[moduloCount])
-    {
-        occurences += 1;
+    moduloCount = 0;
+
+    while(*s != '\0') {
+        if (*s == '\n') {
+            occurences += (current > previous[moduloCount]);
+            previous[moduloCount] = current;
+            moduloCount++;
+            current = 0;
+            if (moduloCount == 3) {
+                moduloCount = 0;
+            }
+        }
+        else {
+            current = current * 10 + *s - 48;
+        }
+        s++;
     }
+    occurences += (current > previous[moduloCount]);
     return occurences;
 }
 
@@ -42,9 +49,11 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    clock_t start = clock();
-    cout << "_duration:" << float( clock () - start ) * 1000.0 /  CLOCKS_PER_SEC << "\n";
-    int answer = run(argv[1]);
+    auto start_cpp = std::chrono::high_resolution_clock::now();
+    auto answer = run(argv[1]);
+    auto end_cpp = std::chrono::high_resolution_clock::now();
+
+    cout << "_duration:"<< float(std::chrono::duration_cast<std::chrono::microseconds>(end_cpp-start_cpp).count()) /1000.0 << "\n";
 
     cout << answer << "\n";
     return 0;

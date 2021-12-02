@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <ctime>
+#include <chrono>
 
 using namespace std;
 
@@ -11,8 +12,8 @@ int parse_int(char* s) {
     s++;
   }
   return res;
-
 }
+
 int run(char* s) {
     int x_pos = 0;
     int depth = 0;
@@ -48,10 +49,11 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    clock_t start = clock();
+    auto start_cpp = std::chrono::high_resolution_clock::now();
     auto answer = run(argv[1]);
+    auto end_cpp = std::chrono::high_resolution_clock::now();
 
-    cout << "_duration:" << float( clock () - start ) * 1000.0 /  CLOCKS_PER_SEC << "\n";
+    cout << "_duration:"<< float(std::chrono::duration_cast<std::chrono::microseconds>(end_cpp-start_cpp).count()) /1000.0 << "\n";
     cout << answer << "\n";
     return 0;
 }
