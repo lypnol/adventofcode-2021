@@ -53,5 +53,5 @@ test "ez" {
         \\263
     ;
     var buf = input.*;
-    std.testing.expect(run(&buf) == 7);
+    try std.testing.expect(run(&buf) == 7);
 }
