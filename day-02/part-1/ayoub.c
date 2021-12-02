@@ -33,7 +33,7 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    printf("sizeof: int=%d int32_t=%d uint64_t=%d\n", sizeof(int), sizeof(int32_t), sizeof(uint64_t))
+    printf("sizeof: int=%d int32_t=%d uint64_t=%d\n", sizeof(int), sizeof(int32_t), sizeof(uint64_t));
 
     clock_t start = clock();
     int answer = run(argv[1]);
