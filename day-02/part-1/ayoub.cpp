@@ -4,7 +4,7 @@
 using namespace std;
 
 int64_t run(char* s) {
-    size_t i = -1;
+    int i = -1;
     int64_t h = 0, d = 0;
 
     while (s[++i]) {
