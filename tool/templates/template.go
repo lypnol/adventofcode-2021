@@ -15,11 +15,11 @@ func main() {
 	// Uncomment this line to disable garbage collection
 	// debug.SetGCPercent(-1)
 
-	argsWithProg := os.Args
 	var input []byte
 	var err error
-	if len(argsWithProg) > 1 {
-		input,err = ioutil.ReadFile(argsWithProg[1])
+	if len(os.Args) > 1 {
+		// Read input from file for local debugging
+		input, err = ioutil.ReadFile(os.Args[1])
 		if err != nil {
 			panic(err)
 		}
