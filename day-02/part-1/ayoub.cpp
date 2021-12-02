@@ -3,25 +3,24 @@
 
 using namespace std;
 
-int run(char* s) {
+int64_t run(char* s) {
     size_t i = -1;
-    int curr = 0;
-    int h = 0, d = 0;
+    int64_t h = 0, d = 0;
 
     while (s[++i]) {
         if (s[i] == '\n') continue;
         if (s[i] == 'f') {
-            i += 7;
-            curr = 0; while (s[++i] != '\n' && s[i]) curr = curr*10 + (int)(s[i]-'0');
-            h += curr;
+            i += 8;
+            h += (int64_t)(s[i]-'0');
+            i++;
         } else if (s[i] == 'u') {
-            i += 2;
-            curr = 0; while (s[++i] != '\n' && s[i]) curr = curr*10 + (int)(s[i]-'0');
-            d -= curr;
+            i += 3;
+            d -= (int64_t)(s[i]-'0');
+            i++;
         } else if (s[i] == 'd') {
-            i += 4;
-            curr = 0; while (s[++i] != '\n' && s[i]) curr = curr*10 + (int)(s[i]-'0');
-            d += curr;
+            i += 5;
+            d += (int64_t)(s[i]-'0');
+            i++;
         }
     }
 
@@ -35,7 +34,7 @@ int main(int argc, char** argv) {
     }
 
     clock_t start = clock();
-    int answer = run(argv[1]);
+    int64_t answer = run(argv[1]);
     
     cout << "_duration:" << float( clock () - start ) * 1000.0 /  CLOCKS_PER_SEC << "\n";
     cout << answer << "\n";

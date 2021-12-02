@@ -3,26 +3,28 @@
 
 using namespace std;
 
-uint64_t run(char* s) {
+int64_t run(char* s) {
     size_t i = -1;
-    uint64_t curr = 0;
-    uint64_t h = 0, d = 0, a = 0;
+    int64_t h = 0, d = 0, a = 0, x;
 
     while (s[++i]) {
         if (s[i] == '\n') continue;
         if (s[i] == 'f') {
-            i += 7;
-            curr = 0; while (s[++i] != '\n' && s[i]) curr = curr*10ULL + (uint64_t)(s[i]-'0');
-            h += curr;
-            d += a*curr;
+            i += 8;
+            x = (int64_t)(s[i]-'0');
+            h += x;
+            d += a*x;
+            i++;
         } else if (s[i] == 'u') {
-            i += 2;
-            curr = 0; while (s[++i] != '\n' && s[i]) curr = curr*10ULL + (uint64_t)(s[i]-'0');
-            a -= curr;
+            i += 3;
+            x = (int64_t)(s[i]-'0');
+            a -= x;
+            i++;
         } else if (s[i] == 'd') {
-            i += 4;
-            curr = 0; while (s[++i] != '\n' && s[i]) curr = curr*10ULL + (uint64_t)(s[i]-'0');
-            a += curr;
+            i += 5;
+            x = (int64_t)(s[i]-'0');
+            a += x;
+            i++;
         }
     }
 
@@ -36,7 +38,7 @@ int main(int argc, char** argv) {
     }
 
     clock_t start = clock();
-    uint64_t answer = run(argv[1]);
+    int64_t answer = run(argv[1]);
     
     cout << "_duration:" << float( clock () - start ) * 1000.0 /  CLOCKS_PER_SEC << "\n";
     cout << answer << "\n";
