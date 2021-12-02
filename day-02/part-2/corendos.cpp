@@ -73,10 +73,10 @@ inline void parse_line(Iterator *it, Context *context) {
         context->depth += value * context->aim;
         break;
         case 'd':
-        context->depth += value;
+        context->aim += value;
         break;
         case 'u':
-        context->depth -= value;
+        context->aim -= value;
         break;
     }
 }
