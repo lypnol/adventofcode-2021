@@ -3,23 +3,23 @@
 
 using namespace std;
 
-int64_t run(char* s) {
+long run(char* s) {
     int i = -1;
-    int64_t h = 0, d = 0;
+    long h = 0, d = 0;
 
     while (s[++i]) {
         if (s[i] == '\n') continue;
         if (s[i] == 'f') {
             i += 8;
-            h += (int64_t)(s[i]-'0');
+            h += (long)(s[i]-'0');
             i++;
         } else if (s[i] == 'u') {
             i += 3;
-            d -= (int64_t)(s[i]-'0');
+            d -= (long)(s[i]-'0');
             i++;
         } else if (s[i] == 'd') {
             i += 5;
-            d += (int64_t)(s[i]-'0');
+            d += (long)(s[i]-'0');
             i++;
         }
     }
@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     }
 
     clock_t start = clock();
-    int64_t answer = run(argv[1]);
+    long answer = run(argv[1]);
     
     cout << "_duration:" << float( clock () - start ) * 1000.0 /  CLOCKS_PER_SEC << "\n";
     cout << answer << "\n";
