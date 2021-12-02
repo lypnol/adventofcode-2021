@@ -38,8 +38,6 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    cout << "sizeof: int=" << sizeof(int) << " int32_t=" << sizeof(int32_t) << " int64_t=" << sizeof(int64_t) << "\n";
-
     clock_t start = clock();
     int64_t answer = run(argv[1]);
     

@@ -36,6 +36,6 @@ int main(int argc, char** argv)
     clock_t start = clock();
     long answer = run(argv[1]);
     
-    printf("_duration:%f\n%lld\n", (float)( clock () - start ) * 1000.0 /  CLOCKS_PER_SEC, answer);
+    printf("_duration:%f\n%ld\n", (float)( clock () - start ) * 1000.0 /  CLOCKS_PER_SEC, answer);
     return 0;
 }
