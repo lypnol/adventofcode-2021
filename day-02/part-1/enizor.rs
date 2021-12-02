@@ -15,17 +15,20 @@ fn run(input: &str) -> usize {
     for line in input.lines() {
         let mut words = line.split_whitespace();
         let verb = words.next().unwrap_or_default();
-        let val = words.next().unwrap_or_default().parse::<usize>().unwrap_or_default();
+        let val = words
+            .next()
+            .unwrap_or_default()
+            .parse::<usize>()
+            .unwrap_or_default();
         match verb {
-            "forward" => {pos += val},
-            "down" => {depth += val},
-            "up" => {depth -= val},
+            "forward" => pos += val,
+            "down" => depth += val,
+            "up" => depth -= val,
             _ => {}
         }
     }
     depth * pos
 }
-
 
 #[cfg(test)]
 mod tests {
