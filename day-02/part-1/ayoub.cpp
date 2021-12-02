@@ -1,25 +1,26 @@
 #include <iostream>
 #include <ctime>
+#include <cstdint>
 
 using namespace std;
 
-long run(char* s) {
+int64_t run(char* s) {
     int i = -1;
-    long h = 0, d = 0;
+    int64_t h = 0, d = 0;
 
     while (s[++i]) {
         if (s[i] == '\n') continue;
         if (s[i] == 'f') {
             i += 8;
-            h += (long)(s[i]-'0');
+            h += (int64_t)(s[i]-'0');
             i++;
         } else if (s[i] == 'u') {
             i += 3;
-            d -= (long)(s[i]-'0');
+            d -= (int64_t)(s[i]-'0');
             i++;
         } else if (s[i] == 'd') {
             i += 5;
-            d += (long)(s[i]-'0');
+            d += (int64_t)(s[i]-'0');
             i++;
         }
     }
@@ -34,7 +35,7 @@ int main(int argc, char** argv) {
     }
 
     clock_t start = clock();
-    long answer = run(argv[1]);
+    int64_t answer = run(argv[1]);
     
     cout << "_duration:" << float( clock () - start ) * 1000.0 /  CLOCKS_PER_SEC << "\n";
     cout << answer << "\n";
