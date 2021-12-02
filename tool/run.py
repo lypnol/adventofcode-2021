@@ -248,7 +248,7 @@ def print_aggregated_results(problem, results_by_author, print_time_dist=False):
         for lang, res in res_by_language.items():
             if count_by_language[lang] > 0:
                 res.duration /= count_by_language[lang]
-            res.all_durations = durations_by_language[result_language]
+            res.all_durations = durations_by_language[lang]
             results.append(res)
     print_results(results, print_time_dist)
 
