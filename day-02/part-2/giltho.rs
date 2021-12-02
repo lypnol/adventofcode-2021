@@ -2,9 +2,11 @@ use std::env::args;
 use std::time::Instant;
 
 fn main() {
+    let input = args().nth(1).expect("Please provide an input");
     let now = Instant::now();
-    let output = run(&args().nth(1).expect("Please provide an input"));
+    let output = run(&input);
     let elapsed = now.elapsed();
+    drop(input);
     println!("_duration:{}", elapsed.as_secs_f64() * 1000.);
     println!("{}", output);
 }
