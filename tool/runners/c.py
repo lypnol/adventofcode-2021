@@ -12,7 +12,7 @@ class SubmissionC(SubmissionWrapper):
         tmp = tempfile.NamedTemporaryFile(prefix="aoc")
         tmp.close()
         compile_output = subprocess.check_output(
-            ["gcc", "-Wall", "-O3", "-std=c11", "-o", tmp.name, file]
+            ["gcc", "-Wall", "-O3", "-std=c17", "-o", tmp.name, file]
         ).decode()
         if compile_output:
             raise CompilationError(compile_output)
