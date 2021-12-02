@@ -10,7 +10,7 @@ fn run(input: [:0]u8) u64 {
     var aim: u32 = 0;
 
     while (all_lines_it.next()) |line| {
-        var amount: u32 = @intCast(u32, line[line.len - 1]) - 48; // single-digit char-to-int
+        var amount: u32 = @intCast(u32, line[line.len - 1]) - '0'; // single-digit char-to-int
         switch (line[0]) {
             'f' => {
                 forward += amount;
