@@ -236,6 +236,8 @@ brew install php@7.4
 brew install dotnet-sdk
 ```
 
+The official documentation is also available [here](https://docs.microsoft.com/en-us/dotnet/core/install/macos).
+
 ### Zig
 
 ```bash
