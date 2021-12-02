@@ -29,6 +29,9 @@ The solutions are automatically tested with github-actions.
   - [Deno](#deno)
   - [Nim](#nim)
   - [OCaml](#ocaml)
+  - [PHP](#php)
+  - [C#](#c)
+  - [Zig](#zig)
 - [History](#history)
 
 ## Usage
@@ -119,13 +122,17 @@ see `./aoc run -h` for full arguments description.
 
 ## Contribute
 
-To participate, you'll have to create your own files containing your solutions (see next sections for details on how to create them).
+To participate, you'll have to create your own files containing your solutions (see next sections for details on how to
+create them).
 
-You can add other functions & modules if you need to. Any external dependency should be added to the appropriate files (`requirements.txt`, `package.json`, and so on).
+You can add other functions & modules if you need to. Any external dependency should be added to the appropriate files
+(`requirements.txt`, `package.json`, and so on).
 
-Once you tested your solution you can submit it by making a PR and a GitHub action will check that your code generates the same outputs as others' code.
+Once you tested your solution you can submit it by making a PR and a GitHub action will check that your code generates
+the same outputs as others' code.
 
-For now we support `c`, `c++`, `java`, `javascript` (with node and deno), `typescript` (with deno) , `go`, `python 3` (+ `cython`), `ruby`, `rust (stable)`, `julia`, `bash`, `nim`, `v`,`zig`, `ocaml`scripts and `php`.
+For now we support `c`, `c++`, `java`, `javascript` (with node and deno), `typescript` (with deno) , `go`, `python 3` (+
+`cython`), `ruby`, `rust (stable)`, `julia`, `bash`, `nim`, `v`,`zig`, `ocaml`scripts and `php`.
 
 ### New submission with aoc
 
@@ -208,12 +215,12 @@ brew install nim
 
 ### OCaml
 
-install esy, esy will take care of installing ocaml and building the dependencies on the first execution (might take a while)
+install esy, esy will take care of installing ocaml and building the dependencies on the first execution (might take a
+while)
 
 ```bash
 npm install -g esy
 ```
-
 
 ### PHP
 
@@ -221,6 +228,18 @@ To have the same version as the one installed in the runner, not mandatory.
 
 ```bash
 brew install php@7.4
+```
+
+### C#
+
+```bash
+brew install dotnet-sdk
+```
+
+### Zig
+
+```bash
+brew install zig
 ```
 
 ## History
