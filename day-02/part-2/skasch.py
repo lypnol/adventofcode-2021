@@ -1,6 +1,6 @@
 import enum
 import dataclasses as dc
-from typing import Iterable
+from typing import Iterable, Tuple
 
 from tool.runners.python import SubmissionPy
 
@@ -31,7 +31,7 @@ class Position:
 
 class SkaschSubmission(SubmissionPy):
 
-    def parse(self, s: str) -> Iterable[tuple[Direction, int]]:
+    def parse(self, s: str) -> Iterable[Tuple[Direction, int]]:
         for line in s.splitlines():
             if stripped_line := line.strip():
                 direction, value = stripped_line.split()
