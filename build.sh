@@ -2,6 +2,9 @@
 
 set -ev
 
+echo "using g++"
+g++ --version
+
 # source $HOME/.cargo/env
 export PATH=$PATH:~/.cargo/bin:$GOROOT/bin
 export PYENV_VERSION=3.8
