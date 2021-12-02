@@ -4,7 +4,7 @@ namespace Aoc {
         private static int fastIntParse(string input) {
             int result = 0;
             for(int idx=0; idx<input.Length; idx++){
-                result = result * 10 + ((int) input[idx]);
+                result = result * 10 + (input[idx] - '0');
             }
             return result;
         }
