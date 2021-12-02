@@ -6,13 +6,13 @@ const sumArray = (arr) => {
 
 /**
  * @param {string} s puzzle input in string format
- * @returns {string} solution flag
+ * @returns {number} solution flag
  */
 const run = (s) => {
     // Your code goes here
-    sSplit = s.split("\n").map(x => parseInt(x));
-    windowSize = 3;
-    counter = 0;
+    let sSplit = s.split("\n").map(x => parseInt(x));
+    const windowSize = 3;
+    let counter = 0;
     for (i = 0; i < sSplit.length - windowSize; i++) {
         if (sumArray(sSplit.slice(i + 1, i + 1 + windowSize)) > sumArray(sSplit.slice(i, i + windowSize))) {
             counter += 1;
