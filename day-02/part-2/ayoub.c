@@ -1,29 +1,27 @@
-#include <iostream>
-#include <ctime>
-#include <cstdint>
+#include <stdio.h>
+#include <time.h>
+#include <stdlib.h>
 
-using namespace std;
-
-int64_t run(char* s) {
+long long run(char* s) {
     size_t i = -1;
-    int64_t h = 0, d = 0, a = 0, x;
+    long long h = 0, d = 0, a = 0, x;
 
     while (s[++i]) {
         if (s[i] == '\n') continue;
         if (s[i] == 'f') {
             i += 8;
-            x = (int64_t)(s[i]-'0');
+            x = (long long)(s[i]-'0');
             h += x;
             d += a*x;
             i++;
         } else if (s[i] == 'u') {
             i += 3;
-            x = (int64_t)(s[i]-'0');
+            x = (long long)(s[i]-'0');
             a -= x;
             i++;
         } else if (s[i] == 'd') {
             i += 5;
-            x = (int64_t)(s[i]-'0');
+            x = (long long)(s[i]-'0');
             a += x;
             i++;
         }
@@ -32,16 +30,16 @@ int64_t run(char* s) {
     return d*h;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     if (argc < 2) {
-        cout << "Missing one argument" << endl;
+        printf("Missing one argument\n");
         exit(1);
     }
 
     clock_t start = clock();
-    int64_t answer = run(argv[1]);
+    long long answer = run(argv[1]);
     
-    cout << "_duration:" << float( clock () - start ) * 1000.0 /  CLOCKS_PER_SEC << "\n";
-    cout << answer << "\n";
+    printf("_duration:%f\n%lld\n", (float)( clock () - start ) * 1000.0 /  CLOCKS_PER_SEC, answer);
     return 0;
 }
