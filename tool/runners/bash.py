@@ -3,6 +3,7 @@ import os
 import stat
 import subprocess
 
+from tool.runners.exceptions import CompilationError, RuntimeError
 from tool.runners.wrapper import SubmissionWrapper
 
 
@@ -21,7 +22,7 @@ class SubmissionBash(SubmissionWrapper):
         except OSError as e:
             if e.errno == errno.ENOENT:
                 # executable not found
-                return None
+                raise CompilationError(e)
             else:
                 # subprocess exited with another error
-                return None
+                raise RuntimeError(e)
