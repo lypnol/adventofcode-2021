@@ -33,13 +33,7 @@ jobs:
           unzip -d /tmp /tmp/v_linux.zip
           sudo /tmp/v/v symlink
           # We can not remove /tmp/v/ as /usr/local/bin/v needs some files in there
-     
-      # use clang instead of gcc
-      - name: switch-to-clang
-        run: |
-          sudo apt-get install clang-12 clang++-12 -y
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/clang-12 60 --slave /usr/bin/g++ g++ /usr/bin/clang++-12
-        
+
       # Install missing dependencies
 
       # Install npm packages if not cached
