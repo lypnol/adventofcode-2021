@@ -11,11 +11,14 @@ class FrenkiSubmission(SubmissionPy):
           A.append(i)
         else:
           B.append(i)
-      if len(A) > len(B):
+      if len(A) >= len(B):
         M = A
         L = B
-        A = []
-        B = []
+      else:
+        M = B
+        L = A
+      A = []
+      B = []
       c = 1
       while len(M) > 1:
         for i in M:
