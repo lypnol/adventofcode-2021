@@ -9,8 +9,40 @@ fn main() {
     println!("{}", output);
 }
 
-fn run(input: &str) -> isize {
-    0
+fn run(input: &str) -> u64 {
+    let numbers: Vec<&str> = input.lines().collect();
+    filter(&numbers, 0, true) * filter(&numbers, 0, false)
+}
+
+fn filter(numbers: &[&str], cursor: usize, most_common: bool) -> u64 {
+    if numbers.len() > 1 {
+        let mut ones: Vec<&str> = Vec::new();
+        let mut zeros: Vec<&str> = Vec::new();
+
+        for n in numbers {
+            if n.chars().nth(cursor).unwrap() == '1' {
+                ones.push(n);
+            } else {
+                zeros.push(n);
+            }
+        }
+
+        if most_common {
+            if ones.len() >= zeros.len() {
+                filter(&ones, cursor + 1, true)
+            } else {
+                filter(&zeros, cursor + 1, true)
+            }
+        } else {
+            if ones.len() >= zeros.len() {
+                filter(&zeros, cursor + 1, false)
+            } else {
+                filter(&ones, cursor + 1, false)
+            }
+        }
+    } else {
+        u64::from_str_radix(numbers[0], 2).unwrap()
+    }
 }
 
 #[cfg(test)]
