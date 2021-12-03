@@ -1,4 +1,4 @@
-from typing import Callable, Iterator, Tuple
+from typing import Callable, Iterator, List, Tuple
 from tool.runners.python import SubmissionPy
 
 
@@ -11,7 +11,7 @@ class SkaschSubmission(SubmissionPy):
 
     def split(
         self, lines: Iterator[str], filter: Callable[[str], bool] = lambda l: l[0] == "1"
-    ) -> Tuple[list[str], list[str]]:
+    ) -> Tuple[List[str], List[str]]:
         falsy, truthy = [], []
         for line in lines:
             if filter(line):
