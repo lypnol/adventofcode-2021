@@ -29,7 +29,7 @@ fn read_input(input: &str) -> (Vec<DiagnosticNumber>, Vec<DiagnosticNumber>, isi
         let mut is_one = false;
         if first == b'1' {
             n |= 1;
-            count +=1;
+            count += 1;
             is_one = true;
         } else {
             count -= 1;
@@ -55,9 +55,8 @@ fn read_input(input: &str) -> (Vec<DiagnosticNumber>, Vec<DiagnosticNumber>, isi
 
 fn run(input: &str) -> usize {
     let (common, uncommon, len) = read_input(input);
-    compute_rating(common, len-2, true) * compute_rating(uncommon, len-2, false)
+    compute_rating(common, len - 2, true) * compute_rating(uncommon, len - 2, false)
 }
-
 
 /// Recursively computes an oxygen or carbon dioxyde rating
 ///
@@ -66,7 +65,7 @@ fn run(input: &str) -> usize {
 /// pos: position of the bit to consider. 0=LSB
 /// common: consider the most common bit or not
 fn compute_rating(values: Vec<DiagnosticNumber>, pos: isize, common: bool) -> usize {
-    if values.len() == 1  || pos < 0 {
+    if values.len() == 1 || pos < 0 {
         values[0] as usize
     } else {
         let mut count = 0;
@@ -75,7 +74,7 @@ fn compute_rating(values: Vec<DiagnosticNumber>, pos: isize, common: bool) -> us
         for v in values {
             let mask = 1 << pos;
             if (v & mask) > 0 {
-                count += 1; 
+                count += 1;
                 ones.push(v);
             } else {
                 count -= 1;
@@ -83,9 +82,9 @@ fn compute_rating(values: Vec<DiagnosticNumber>, pos: isize, common: bool) -> us
             }
         }
         if common ^ (count >= 0) {
-            compute_rating(zeroes, pos-1, common)
+            compute_rating(zeroes, pos - 1, common)
         } else {
-            compute_rating(ones, pos-1, common)
+            compute_rating(ones, pos - 1, common)
         }
     }
 }

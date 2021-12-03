@@ -10,7 +10,7 @@ fn main() {
 }
 
 fn run(input: &str) -> usize {
-    let mut popcount = [0i16;16];
+    let mut popcount = [0i16; 16];
     let mut len = 0;
     for line in input.lines() {
         if len == 0 {
@@ -18,9 +18,9 @@ fn run(input: &str) -> usize {
         }
         for (i, &c) in line.as_bytes().iter().enumerate() {
             match c {
-                b'0' => popcount[i] -=1,
-                b'1' => popcount[i] +=1,
-                _ => {},
+                b'0' => popcount[i] -= 1,
+                b'1' => popcount[i] += 1,
+                _ => {}
             }
         }
     }
@@ -31,7 +31,7 @@ fn run(input: &str) -> usize {
             gamma |= 1;
         }
     }
-    let mask = (1<<len) -1;
+    let mask = (1 << len) - 1;
     gamma * (!gamma & mask)
 }
 
