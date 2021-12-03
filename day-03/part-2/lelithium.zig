@@ -66,16 +66,28 @@ fn run(input: [:0]u8) u32 {
         // Reset line count
         line_count = full_line_count;
         main: while (bit_pos < LENGTH) : (bit_pos += 1) {
-            //std.debug.print("{} bits for {} lines\n", .{bit_count, line_count});
+            //std.debug.print("bit pos {}: {} bits for {} lines\n", .{bit_pos, bit_count, line_count});
             bit_choice = bit_count * 2 >= line_count;
-            if (iterations == 1) {
+            if (iterations == 0) {
                 // Flip bit_choice to select least bit.
                 bit_choice = !bit_choice;
             }
             //std.debug.print("Now working on bit_pos {} (choice {})\n", .{bit_pos, bit_choice});
             // Reset bit count (look-ahead)
             bit_count = 0;
+            // If there's only one valid line left, pick it
+            if (line_count == 1) {
+                if (iterations == 0) {
+                    oxygen_idx = valid_line_idx[0];
+                } else {
+                    co2_idx = valid_line_idx[0];
+                }
+                // Break out of the main loop
+                break :main;
+            }
+            line_count = 0;
             for (valid_line_idx) |idx| {
+                //std.debug.print("Got index {}\n", .{idx});
                 // Check if we're on a valid index
                 if (idx == 1001) {
                     continue; // skip on 1001
@@ -83,20 +95,13 @@ fn run(input: [:0]u8) u32 {
                 if (idx == 1002) {
                     break; // end on 1002
                 }
-                // If there's only one valid line left, pick it
-                if (line_count == 1) {
-                    if (iterations == 0) {
-                        oxygen_idx = idx;
-                    } else {
-                        co2_idx = idx;
-                    }
-                    // Break out of the main loop
-                    break :main;
-                }
                 //std.debug.print("\tUsing index {}\n", .{idx});
                 //std.debug.print("\tProcessing line {s}\n", .{all_lines[idx]});
                 if (bit_choice != (all_lines[idx][bit_pos] == '1')) {
-                    //std.debug.print("\t\t{s}: bit {c} pos {} is valid\n", .{all_lines[idx], all_lines[idx][bit_pos], bit_pos});
+                    //std.debug.print("\t\tCurrent line count {}\n", .{line_count});
+                    valid_line_idx[line_count] = idx;
+                    line_count += 1;
+                    //std.debug.print("\t\t{s} ([{}]): bit {c} pos {} is valid\n", .{all_lines[idx], idx, all_lines[idx][bit_pos], bit_pos});
                     // If we're at bit_pos == LENGTH, this is the final bit to check.
                     // We return the current line, as, if the puzzle is well built, we know it is unique.
                     if (bit_pos == LENGTH - 1) {
@@ -108,14 +113,12 @@ fn run(input: [:0]u8) u32 {
                         break;
                     }
                     // If we're not done yet, actualize the next bit_count
-                    if (all_lines[idx][bit_pos + 1] == '1')
+                    if (all_lines[idx][bit_pos + 1] == '1'){
                         bit_count += 1;
-                    } else {
-                        // Invalid line. Remove it from valid_line_idx, and decrease the line count.
-                        valid_line_idx[idx] = 1001;
-                        line_count -= 1;
                     }
+                }
             }
+            valid_line_idx[line_count] = 1002;
         }
     }
 
