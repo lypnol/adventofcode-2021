@@ -1,4 +1,3 @@
-import collections
 from typing import Iterator
 from tool.runners.python import SubmissionPy
 
@@ -16,19 +15,20 @@ class SkaschSubmission(SubmissionPy):
         :return: solution flag
         """
         # Your code goes here
-        counter = collections.Counter()
+        counter = None
         n_lines = 0
-        n_chars = None
         for line in self.parse(s):
+            if counter is None:
+                counter = [0] * len(line)
             n_lines += 1
-            if n_chars is None:
-                n_chars = len(line)
             for idx, char in enumerate(line):
                 if char == "1":
-                    counter[n_chars - 1 - idx] += 1
-        gamma = sum(1 << n for n, count in counter.items() if 2 * count > n_lines)
-        epsilon = gamma ^ ((1 << n_chars) - 1)
-        print(gamma, epsilon)
+                    counter[idx] += 1
+        gamma = 0
+        epsilon = 0
+        for count in counter:
+            gamma = gamma * 2 + (2 * count > n_lines)
+            epsilon = epsilon * 2 + (2 * count <= n_lines)
         return gamma * epsilon
 
 
