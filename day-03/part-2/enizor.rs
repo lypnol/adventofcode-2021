@@ -55,7 +55,7 @@ fn read_input(input: &str) -> (Vec<DiagnosticNumber>, Vec<DiagnosticNumber>, isi
 
 fn run(input: &str) -> usize {
     let (common, uncommon, len) = read_input(input);
-    compute_rating(common, len - 2, true) * compute_rating(uncommon, len - 2, false)
+    compute_rating::<true>(common, len - 2) * compute_rating::<false>(uncommon, len - 2)
 }
 
 /// Recursively computes an oxygen or carbon dioxyde rating
@@ -64,27 +64,33 @@ fn run(input: &str) -> usize {
 /// values: numbers to consider
 /// pos: position of the bit to consider. 0=LSB
 /// common: consider the most common bit or not
-fn compute_rating(values: Vec<DiagnosticNumber>, pos: isize, common: bool) -> usize {
-    if values.len() == 1 || pos < 0 {
-        values[0] as usize
-    } else {
-        let mut count = 0;
-        let mut ones = Vec::with_capacity(values.len());
-        let mut zeroes = Vec::with_capacity(values.len());
-        for v in values {
-            let mask = 1 << pos;
-            if (v & mask) > 0 {
-                count += 1;
-                ones.push(v);
-            } else {
-                count -= 1;
-                zeroes.push(v);
-            }
-        }
-        if common ^ (count >= 0) {
-            compute_rating(zeroes, pos - 1, common)
+fn compute_rating<const COMMON: bool>(mut values: Vec<DiagnosticNumber>, mut pos: isize) -> usize {
+    let mut ones = Vec::with_capacity(values.len());
+    let mut zeroes = Vec::with_capacity(values.len());
+    loop {
+        if values.len() == 1 || pos < 0 {
+            return values[0] as usize
         } else {
-            compute_rating(ones, pos - 1, common)
+            let mut count = 0;
+            ones.clear();
+            zeroes.clear();
+            for &v in &values {
+                let mask = 1 << pos;
+                if (v & mask) > 0 {
+                    count += 1;
+                    ones.push(v);
+                } else {
+                    count -= 1;
+                    zeroes.push(v);
+                }
+            }
+            pos -= 1;
+            if COMMON ^ (count >= 0) {
+                std::mem::swap(&mut values, &mut zeroes);
+            } else {
+                std::mem::swap(&mut values, &mut ones);
+                // values = ones;
+            }
         }
     }
 }
