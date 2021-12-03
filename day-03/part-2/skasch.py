@@ -20,7 +20,7 @@ class SkaschSubmission(SubmissionPy):
                 falsy.append(line)
         return falsy, truthy
 
-    def find(self, values: list[str], most_common: bool, equality_char: str) -> int:
+    def find(self, values: List[str], most_common: bool, equality_char: str) -> int:
         """This function modifies values inplace."""
         idx = 1
         while len(values) > 1:
