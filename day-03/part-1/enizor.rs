@@ -17,14 +17,14 @@ fn run(input: &str) -> usize {
             len = line.len();
         }
         for (i, &c) in line.as_bytes().iter().enumerate() {
-            popcount[i] -= 2;
+            popcount[i] -= 1;
             popcount[i] += ((c & 1) << 1) as i16;
         }
     }
     let mut gamma: usize = 0;
     for &b in &popcount[..len] {
         gamma <<= 1;
-        gamma |= (b >> 15) as usize;
+        gamma |= (b as u16 >> 15) as usize;
     }
     let mask = (1 << len) - 1;
     gamma * (!gamma & mask)
