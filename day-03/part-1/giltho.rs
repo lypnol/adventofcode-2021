@@ -6,7 +6,6 @@ fn main() {
     let now = Instant::now();
     let output = run(&input);
     let elapsed = now.elapsed();
-    drop(input);
     println!("_duration:{}", elapsed.as_secs_f64() * 1000.);
     println!("{}", output);
 }

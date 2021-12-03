@@ -13,6 +13,8 @@ const SIZE: usize = 4096;
 #[cfg(not(test))]
 const LEN: usize = 12;
 
+static mut TREE: [(u16, u16); SIZE] = [(0, 0); SIZE];
+
 fn insert(tree: &mut [(u16, u16); SIZE], word: &[u8]) {
     let mut idx = 0;
     for s in word {
@@ -31,7 +33,6 @@ fn insert(tree: &mut [(u16, u16); SIZE], word: &[u8]) {
 macro_rules! declare_find {
     ($name: ident, $op: tt) => {
         fn $name(tree: &[(u16, u16); SIZE]) -> u32 {
-            println!("start");
             let mut val: u32 = 0;
             let mut fact: u32 = 2u32.pow(LEN as u32 - 1);
             let mut idx = 0;
@@ -60,18 +61,17 @@ fn main() {
     let now = Instant::now();
     let output = run(input.as_mut());
     let elapsed = now.elapsed();
-    drop(input);
     println!("_duration:{}", elapsed.as_secs_f64() * 1000.);
     println!("{}", output);
 }
 
 fn run(input: &str) -> u32 {
-    let mut tree: [(u16, u16); SIZE] = [(0, 0); SIZE];
+    // let mut tree: [(u16, u16); SIZE] = [(0, 0); SIZE];
     for word in input.as_bytes().split(|x| *x == 10) {
-        insert(&mut tree, word);
+        insert(unsafe { &mut TREE }, word);
     }
-    let y = oxygen(&tree);
-    let x = co2(&tree);
+    let y = unsafe { oxygen(&TREE) };
+    let x = unsafe { co2(&TREE) };
     x * y
 }
 
