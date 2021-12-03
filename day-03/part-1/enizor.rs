@@ -25,9 +25,9 @@ fn run(input: &str) -> usize {
         }
     }
     let mut gamma: usize = 0;
-    for &b in &popcount {
+    for &b in &popcount[..len] {
         gamma <<= 1;
-        if b >= 0 {
+        if b > 0 {
             gamma |= 1;
         }
     }
