@@ -17,28 +17,28 @@ fn run(input: [:0]u8) u32 {
 
     // Stores all "valid" indexes (i.e. that match the criteria defined by the puzzle)
     // Let's use 1001 as SKIP and 1002 as END
-    var valid_line_idx = [_]u16{1002} ** 1000;  // Initialize as "empty" (only END)
+    var valid_line_idx = [_]u16{1002} ** 1000; // Initialize as "empty" (only END)
 
     // Stores the number of "valid" lines
     var line_count: u16 = 0;
-    
+
     for (input) |char| {
         // std.debug.print("char: {c}\n", .{char});
         // Check if we are at the end of a line
         if (bit_pos == LENGTH) {
-            bit_pos = 0;  // reset bit_pos
-            line_count += 1;  // count new line
-            continue;  // skip over tests
+            bit_pos = 0; // reset bit_pos
+            line_count += 1; // count new line
+            continue; // skip over tests
         }
         // Build the first bit count (for all valid lines) so we don't have to re-walk the entire array
         if (bit_pos == 0 and char == '1') {
-            bit_count += 1; // 
+            bit_count += 1; //
         }
         // Store the line
         all_lines[line_count][bit_pos] = char;
         bit_pos += 1;
     }
-    line_count += 1;  // don't forget the final line
+    line_count += 1; // don't forget the final line
 
     var full_line_count = line_count; // store full line count to rebuild valid_line_idx afterwards
     var full_bit_count = bit_count; // also store bit count for first iteration
@@ -53,7 +53,7 @@ fn run(input: [:0]u8) u32 {
     // Used to unroll the processing loop.
     // Iteration 0 sets o2, and iteration 1 sets co2
     comptime var iterations: u2 = 0;
-    inline while (iterations < 2) : (iterations += 1){
+    inline while (iterations < 2) : (iterations += 1) {
         // (re)build valid_line_idx
         var _i: u16 = 0;
         while (_i < full_line_count) : (_i += 1) {
@@ -68,7 +68,7 @@ fn run(input: [:0]u8) u32 {
         main: while (bit_pos < LENGTH) : (bit_pos += 1) {
             //std.debug.print("{} bits for {} lines\n", .{bit_count, line_count});
             bit_choice = bit_count * 2 >= line_count;
-            if (iterations == 1){
+            if (iterations == 1) {
                 // Flip bit_choice to select least bit.
                 bit_choice = !bit_choice;
             }
@@ -84,11 +84,10 @@ fn run(input: [:0]u8) u32 {
                     break; // end on 1002
                 }
                 // If there's only one valid line left, pick it
-                if (line_count == 1){
-                    if (iterations == 0){
+                if (line_count == 1) {
+                    if (iterations == 0) {
                         oxygen_idx = idx;
-                    }
-                    else{
+                    } else {
                         co2_idx = idx;
                     }
                     // Break out of the main loop
@@ -102,10 +101,9 @@ fn run(input: [:0]u8) u32 {
                         // If we're at bit_pos == LENGTH, this is the final bit to check.
                         // We return the current line, as, if the puzzle is well built, we know it is unique.
                         if (bit_pos == LENGTH - 1) {
-                            if (iterations == 0){
+                            if (iterations == 0) {
                                 oxygen_idx = idx;
-                            }
-                            else{
+                            } else {
                                 co2_idx = idx;
                             }
                             break;
@@ -123,10 +121,9 @@ fn run(input: [:0]u8) u32 {
                     if (all_lines[idx][bit_pos] == '0') {
                         //std.debug.print("\t\t{s}: bit {c} pos {} is valid\n", .{all_lines[idx], all_lines[idx][bit_pos], bit_pos});
                         if (bit_pos == LENGTH - 1) {
-                            if (iterations == 0){
+                            if (iterations == 0) {
                                 oxygen_idx = idx;
-                            }
-                            else{
+                            } else {
                                 co2_idx = idx;
                             }
                             break;
@@ -147,7 +144,7 @@ fn run(input: [:0]u8) u32 {
     var oxygen = std.fmt.parseUnsigned(u16, all_lines[oxygen_idx][0..], 2) catch unreachable;
     var co2 = std.fmt.parseUnsigned(u16, all_lines[co2_idx][0..], 2) catch unreachable;
 
-    return @as(u32, oxygen) * co2;  // Cast as u32 to get some more room
+    return @as(u32, oxygen) * co2; // Cast as u32 to get some more room
 }
 
 pub fn main() !void {

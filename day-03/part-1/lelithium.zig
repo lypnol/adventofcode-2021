@@ -7,7 +7,7 @@ const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 const LENGTH = 12; // prod
 
 fn run(input: [:0]u8) u32 {
-    // Store the current bit position we're comparing 
+    // Store the current bit position we're comparing
     var bit_pos: u8 = 0;
 
     // Stores bit counts to build final value.
@@ -21,10 +21,10 @@ fn run(input: [:0]u8) u32 {
     for (input) |char| {
         //std.debug.print("char: {c}\n", .{char});
         switch (char) {
-            '0' => bit_pos += 1,  // Don't increase bit_count, increase bit_pos
+            '0' => bit_pos += 1, // Don't increase bit_count, increase bit_pos
             '1' => {
-                bit_count[bit_pos] += 1;  // Count that 1
-                bit_pos += 1;  // And increase bit_pos
+                bit_count[bit_pos] += 1; // Count that 1
+                bit_pos += 1; // And increase bit_pos
             },
             '\n' => {
                 line_count += 1; // EOL - count it
