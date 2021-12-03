@@ -5,59 +5,46 @@ using System.Collections.Generic;
 
 namespace Aoc
 {
-    class TreeNode {
-        public int count = 0;
-        public TreeNode? child0;
-        public TreeNode? child1; 
-    }
-
     class Solution
     {
         private static int LINE_LENGHT = 12;
 
-        private static void InitTree(TreeNode node, int depth) {
-            if (depth == LINE_LENGHT) return;
-            else {
-                node.child0 = new TreeNode();
-                InitTree(node.child0, depth+1);
-                node.child1 = new TreeNode();
-                InitTree(node.child1, depth+1);
-            }
-        }
-
-        private static bool ShouldSelectChild1(TreeNode node, bool oxy) {
-            return (node.child0.count == 0 ||(oxy ^ (node.child1.count < node.child0.count))) && node.child1.count != 0;
+        private static bool ShouldSelectChild1(ushort[] heap, int heap_index, bool oxy) {
+            return heap[2*heap_index+1] != 0 && (heap[2*heap_index+2] == 0 ||(oxy ^ (heap[2*heap_index+1] < heap[2*heap_index+2]))) ;
             
         }
-        private static int GetRating(TreeNode node, int depth, int current, bool oxy) {
-            if (depth == LINE_LENGHT) return current;
-            else {
-                return GetRating(
-                    ShouldSelectChild1(node, oxy) ? node.child1 : node.child0, 
-                    depth + 1,
-                    ShouldSelectChild1(node, oxy) ? current + (1 << (LINE_LENGHT-depth-1)): current,
-                    oxy
-                );
+        private static int GetRating(ushort[] heap, bool oxy) {
+            int heap_index = 0;
+            int depth = 0;
+            int rating = 0;
+            while (depth < LINE_LENGHT){
+                if(ShouldSelectChild1(heap, heap_index, oxy)){
+                    heap_index = 2 * heap_index + 1;
+                    rating += (1 << (LINE_LENGHT-depth-1));
+                } else {
+                    heap_index = 2 * heap_index + 2;
+                }
+                depth++;
             }
+            return rating;
         }
 
         private static int solve(char[] input) {
-            TreeNode tree = new TreeNode();
-            InitTree(tree, 0);
-            TreeNode node = tree;
-            node.count++;
+            int heap_size = (1<<(LINE_LENGHT+2)-1);
+            ushort[] heap = new ushort[heap_size];
+            int heap_index = 0;
+            heap[heap_index]++;
             for (int index = 0; index < input.Length; index++){
                 if (input[index] == '\n'){
-                    node = tree;
-                    node.count++;
+                    heap_index = 0;
                 } else {
                     if (input[index] == '1') {
-                        node = node.child1;
-                    } else {node = node.child0;}
-                    node.count++;
+                        heap_index = 2*heap_index + 1;
+                    } else {heap_index = 2*heap_index+2;}
                 }
+                heap[heap_index]++;
             }
-            return GetRating(tree, 0 ,0, true) * GetRating(tree, 0 ,0, false);
+            return GetRating(heap, true) * GetRating(heap, false);
         }
 
         public static void Main(string[] args) {
