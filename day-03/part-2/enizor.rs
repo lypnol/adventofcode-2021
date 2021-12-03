@@ -17,7 +17,6 @@ type DiagnosticNumber = u16;
 fn read_input(input: &str) -> (Vec<DiagnosticNumber>, Vec<DiagnosticNumber>, isize) {
     let mut ones = Vec::new();
     let mut zeroes = Vec::new();
-    let mut count = 0;
     let mut len = 0;
     for line in input.lines() {
         let mut n = 0;
@@ -26,27 +25,18 @@ fn read_input(input: &str) -> (Vec<DiagnosticNumber>, Vec<DiagnosticNumber>, isi
             len = bytes.len() as isize;
         }
         let first = bytes[0];
-        let mut is_one = false;
-        if first == b'1' {
-            n |= 1;
-            count += 1;
-            is_one = true;
-        } else {
-            count -= 1;
-        }
+        n |= (first & 1) as DiagnosticNumber;
         for &c in &bytes[1..] {
             n <<= 1;
-            if c == b'1' {
-                n |= 1;
-            }
+            n |= (c & 1) as u16;
         }
-        if is_one {
+        if first & 1 > 0 {
             ones.push(n);
         } else {
             zeroes.push(n);
         }
     }
-    if count >= 0 {
+    if ones.len() >= zeroes.len() {
         (ones, zeroes, len)
     } else {
         (zeroes, ones, len)
@@ -69,27 +59,22 @@ fn compute_rating<const COMMON: bool>(mut values: Vec<DiagnosticNumber>, mut pos
     let mut zeroes = Vec::with_capacity(values.len());
     loop {
         if values.len() == 1 || pos < 0 {
-            return values[0] as usize
+            return values[0] as usize;
         } else {
-            let mut count = 0;
             ones.clear();
             zeroes.clear();
             for &v in &values {
-                let mask = 1 << pos;
-                if (v & mask) > 0 {
-                    count += 1;
+                if ((v >> pos) & 1) > 0 {
                     ones.push(v);
                 } else {
-                    count -= 1;
                     zeroes.push(v);
                 }
             }
             pos -= 1;
-            if COMMON ^ (count >= 0) {
+            if COMMON ^ (ones.len() >= zeroes.len()) {
                 std::mem::swap(&mut values, &mut zeroes);
             } else {
                 std::mem::swap(&mut values, &mut ones);
-                // values = ones;
             }
         }
     }
