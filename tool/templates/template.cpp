@@ -1,10 +1,10 @@
 #include <iostream>
 #include <string>
-#include <ctime>
+#include <chrono>
 
 using namespace std;
 
-string run(string s) {
+string run(char* s) {
     // Your code goes here
 }
 
@@ -14,10 +14,12 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-    clock_t start = clock();
-    auto answer = run(string(argv[1]));
+    auto start = std::chrono::high_resolution_clock::now();
+    auto answer = run(argv[1]);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    cout << "_duration:"<< float(std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()) / 1000.0 << "\n";
     
-    cout << "_duration:" << float( clock () - start ) * 1000.0 /  CLOCKS_PER_SEC << "\n";
     cout << answer << "\n";
     return 0;
 }
