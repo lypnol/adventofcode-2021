@@ -34,7 +34,7 @@ fn run(input: &str) -> u64 {
         }
     }
 
-    gamma * ((0..size.unwrap()).fold(0, |acc, i| acc + u64::pow(2, i as u32)) ^ gamma)
+    gamma * ((1 << size.unwrap()) - 1 ^ gamma)
 }
 
 #[cfg(test)]
