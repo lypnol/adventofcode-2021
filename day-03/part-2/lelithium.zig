@@ -95,46 +95,26 @@ fn run(input: [:0]u8) u32 {
                 }
                 //std.debug.print("\tUsing index {}\n", .{idx});
                 //std.debug.print("\tProcessing line {s}\n", .{all_lines[idx]});
-                if (bit_choice) {
-                    if (all_lines[idx][bit_pos] == '1') {
-                        //std.debug.print("\t\t{s}: bit {c} pos {} is valid\n", .{all_lines[idx], all_lines[idx][bit_pos], bit_pos});
-                        // If we're at bit_pos == LENGTH, this is the final bit to check.
-                        // We return the current line, as, if the puzzle is well built, we know it is unique.
-                        if (bit_pos == LENGTH - 1) {
-                            if (iterations == 0) {
-                                oxygen_idx = idx;
-                            } else {
-                                co2_idx = idx;
-                            }
-                            break;
+                if (bit_choice != (all_lines[idx][bit_pos] == '1')) {
+                    //std.debug.print("\t\t{s}: bit {c} pos {} is valid\n", .{all_lines[idx], all_lines[idx][bit_pos], bit_pos});
+                    // If we're at bit_pos == LENGTH, this is the final bit to check.
+                    // We return the current line, as, if the puzzle is well built, we know it is unique.
+                    if (bit_pos == LENGTH - 1) {
+                        if (iterations == 0) {
+                            oxygen_idx = idx;
+                        } else {
+                            co2_idx = idx;
                         }
-                        // If we're not done yet, actualize the next bit_count
-                        if (all_lines[idx][bit_pos + 1] == '1')
-                            bit_count += 1;
+                        break;
+                    }
+                    // If we're not done yet, actualize the next bit_count
+                    if (all_lines[idx][bit_pos + 1] == '1')
+                        bit_count += 1;
                     } else {
                         // Invalid line. Remove it from valid_line_idx, and decrease the line count.
                         valid_line_idx[idx] = 1001;
                         line_count -= 1;
                     }
-                } else {
-                    // See comments above.
-                    if (all_lines[idx][bit_pos] == '0') {
-                        //std.debug.print("\t\t{s}: bit {c} pos {} is valid\n", .{all_lines[idx], all_lines[idx][bit_pos], bit_pos});
-                        if (bit_pos == LENGTH - 1) {
-                            if (iterations == 0) {
-                                oxygen_idx = idx;
-                            } else {
-                                co2_idx = idx;
-                            }
-                            break;
-                        }
-                        if (all_lines[idx][bit_pos + 1] == '1')
-                            bit_count += 1;
-                    } else {
-                        valid_line_idx[idx] = 1001;
-                        line_count -= 1;
-                    }
-                }
             }
         }
     }
