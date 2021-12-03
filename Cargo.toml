@@ -95,3 +95,27 @@ path = "./day-03/part-1/giltho.rs"
 [[bin]]
 name = "day-03-part-2-giltho"
 path = "./day-03/part-2/giltho.rs"
+
+[[bin]]
+name = "day-03-part-1-juliendoutre"
+path = "./day-03/part-1/juliendoutre.rs"
+
+[[bin]]
+name = "day-03-part-2-juliendoutre"
+path = "./day-03/part-2/juliendoutre.rs"
+
+[[bin]]
+name = "day-03-part-1-enizor"
+path = "./day-03/part-1/enizor.rs"
+
+[[bin]]
+name = "day-03-part-2-enizor"
+path = "./day-03/part-2/enizor.rs"
+
+[[bin]]
+name = "day-03-part-1-skasch"
+path = "./day-03/part-1/skasch.rs"
+
+[[bin]]
+name = "day-03-part-2-skasch"
+path = "./day-03/part-2/skasch.rs"
