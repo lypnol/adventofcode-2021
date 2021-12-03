@@ -6,44 +6,47 @@ const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 //const LENGTH = 5; // testing
 const LENGTH = 12; // prod
 
+//const MAJORITY_THRESHOLD = 6; // testing
+const MAJORITY_THRESHOLD = 500; // prod
+
 fn run(input: [:0]u8) u32 {
     // Store the current bit position we're comparing
-    var bit_pos: u8 = 0;
+    comptime var bit_pos: u8 = 0;
 
     // Stores bit counts to build final value.
     // Could be unrolled into 5 or 12 counters to gain some nanoseconds
     var bit_count = [_]u32{0} ** LENGTH;
 
-    // Counts the number of lines in the input
     var line_count: u32 = 0;
-
-    // Iterate over the full input
-    for (input) |char| {
-        //std.debug.print("char: {c}\n", .{char});
-        switch (char) {
-            '0' => bit_pos += 1, // Don't increase bit_count, increase bit_pos
-            '1' => {
-                bit_count[bit_pos] += 1; // Count that 1
-                bit_pos += 1; // And increase bit_pos
-            },
-            '\n' => {
-                line_count += 1; // EOL - count it
-                bit_pos = 0; // and reset bit_count
-            },
-            else => unreachable,
-        }
-    }
 
     var gamma: u12 = 0; // showcase arbitrary bit length
     // var gamma: u5 = 0; // testing
 
-    // comptime var to unroll
-    comptime var _i: u8 = 0;
-    // Unroll loop
-    inline while (_i < LENGTH) : (_i += 1) {
-        if (bit_count[_i] * 2 >= line_count) { // check if there's more 1s than 0s. Assuming >= based on part 2
-            gamma += (@as(u12, 1) << (LENGTH - @intCast(u4, _i) - 1)); // we can only store gamma as epsilon = ~gamma (in u12)
-            //gamma += (@as(u5, 1) << (LENGTH - @intCast(u3, _i) - 1)); // testing
+    // Iterate over the full input
+    var i: usize = 0;
+
+    inline while (bit_pos < LENGTH) : (bit_pos += 1){
+        //std.debug.print("current bit pos: {}\n", .{bit_pos});
+        i = bit_pos;
+        while (i < input.len){
+            if (bit_count[bit_pos] >= MAJORITY_THRESHOLD or line_count > MAJORITY_THRESHOLD){
+                // Further operations won't change result
+                break;
+            }
+            //std.debug.print("{c}\n", .{input[i]});
+            if (input[i] == '1'){
+                bit_count[bit_pos] += 1;
+            }
+            i += 13; //prod
+            //i += 6; //test
+        }
+    }
+
+    bit_pos = 0;
+    inline while (bit_pos < LENGTH) : (bit_pos += 1) {
+        if (bit_count[bit_pos] >= MAJORITY_THRESHOLD) { // check if there's more 1s than 0s. Assuming >= based on part 2
+            gamma += (@as(u12, 1) << (LENGTH - @intCast(u4, bit_pos) - 1)); // we can only store gamma as epsilon = ~gamma (in u12)
+            //gamma += (@as(u5, 1) << (LENGTH - @intCast(u3, bit_pos) - 1)); // testing
         }
     }
     return @as(u32, gamma) * ~gamma; // preventively cast as u32 to avoid overflow
