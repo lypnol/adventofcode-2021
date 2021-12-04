@@ -13,11 +13,11 @@ type board struct {
 	// lookup contains the mapping between a number on the board and its coordinates
 	lookup map[int][2]int
 
-	// rows contains the status of all numbers on the board indexed by row
-	rows [5][5]bool
+	// rows contains the number of marked numbers per row
+	rows [5]int
 
-	// columns contains the status of all numbers on the board indexed by columns
-	columns [5][5]bool
+	// columns contains the number of marked numbers per column
+	columns [5]int
 
 	// sum contains the sum of all unmarked numbers on the board
 	sum int
@@ -56,8 +56,6 @@ func run(s string) int {
 			number, _ := strconv.Atoi(v)
 
 			boards[index].lookup[number] = [2]int{row, column}
-			boards[index].rows[row][column] = false
-			boards[index].columns[column][row] = false
 			boards[index].sum += number
 		}
 
@@ -75,21 +73,11 @@ func run(s string) int {
 			if coordinates, ok := boards[idx].lookup[number]; ok {
 				row, column := coordinates[0], coordinates[1]
 
-				boards[idx].rows[row][column] = true
-				boards[idx].columns[column][row] = true
+				boards[idx].rows[row]++
+				boards[idx].columns[column]++
 				boards[idx].sum -= number
 
-				won := true
-				for _, v := range boards[idx].rows[row] {
-					won = won && v
-				}
-				boards[idx].won = boards[idx].won || won
-
-				won = true
-				for _, v := range boards[idx].columns[column] {
-					won = won && v
-				}
-				boards[idx].won = boards[idx].won || won
+				boards[idx].won = boards[idx].won || (boards[idx].rows[row] == 5) || (boards[idx].columns[column] == 5)
 
 				if boards[idx].won {
 					winners = append(winners, idx)
