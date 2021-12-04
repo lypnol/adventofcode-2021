@@ -13,28 +13,29 @@ fn main() {
 
 fn run(input: &str) -> usize {
     let mut parts = input.split("\n\n");
-    let draw = parts
+    let draw: Vec<BoardNumber> = parts
         .next()
         .unwrap()
         .split(',')
-        .map(|s| s.trim().parse().unwrap());
+        .map(|s| s.trim().parse().unwrap())
+        .collect();
     let mut boards: Vec<Board> = parts.map(|s| s.parse().unwrap()).collect();
-    let mut winning_boards = vec![false; boards.len()];
-    let mut count = boards.len();
-    for nb in draw {
-        for (i, b) in &mut boards.iter_mut().enumerate() {
-            if !winning_boards[i] {
-                if let Some(result) = b.insert_nb(nb) {
-                    winning_boards[i] = true;
-                    count -= 1;
-                    if count == 0 {
-                        return result;
-                    }
+    let mut max_draws = 0;
+    let mut score = 0;
+    for b in &mut boards.iter_mut() {
+        let mut draws_count = 0;
+        for &nb in &draw {
+            draws_count += 1;
+            if let Some(result) = b.insert_nb(nb) {
+                if draws_count > max_draws {
+                    max_draws = draws_count;
+                    score = result;
                 }
+                break;
             }
         }
     }
-    0
+    score
 }
 
 type BoardNumber = i8;

@@ -13,20 +13,32 @@ fn main() {
 
 fn run(input: &str) -> usize {
     let mut parts = input.split("\n\n");
-    let draw = parts
+    let draw: Vec<BoardNumber> = parts
         .next()
         .unwrap()
         .split(',')
-        .map(|s| s.trim().parse().unwrap());
+        .map(|s| s.trim().parse().unwrap())
+        .collect();
     let mut boards: Vec<Board> = parts.map(|s| s.parse().unwrap()).collect();
-    for nb in draw {
-        for b in &mut boards {
+    let mut min_draws = draw.len();
+    let mut score = 0;
+    for b in &mut boards.iter_mut() {
+        let mut draws_count = 0;
+        for &nb in &draw {
+            draws_count += 1;
+            if draws_count == min_draws {
+                break;
+            }
             if let Some(result) = b.insert_nb(nb) {
-                return result;
+                if draws_count < min_draws {
+                    min_draws = draws_count;
+                    score = result;
+                }
+                break;
             }
         }
     }
-    0
+    score
 }
 
 type BoardNumber = i8;
