@@ -7,6 +7,28 @@ namespace Aoc
     class Solution
     {
 
+        private static int ParseBoard(char[] input, int cursor, int[,] board) {
+            int number = 0;
+            int x = 0;
+            int y = 0;
+            while (x < 5) {
+                if (cursor == input.Length || input[cursor] == '\n') {
+                    board[x, y] = number;
+                    number = 0;
+                    y = 0;
+                    x++;
+                } else if (input[cursor] == ' ') {
+                    if (input[cursor+1] != ' ' && input[cursor-1] != '\n') {
+                        board[x, y] = number;
+                        number = 0;
+                        y++;
+                    }
+                } else {number = 10 * number + (int)(input[cursor] - '0');}
+                cursor++;
+            }
+            return cursor;
+        }
+        
         private static int GetBoardSum(int[,] board) {
             int total = 0;
             for (int rowIdx = 0; rowIdx < 5; rowIdx++) {
@@ -58,35 +80,16 @@ namespace Aoc
             cursor += 2;
             
             int[,] board = new int[5,5];
-            int x = 0;
-            int y = 0;
             int minDrawIdx = int.MaxValue;
             int minTotal = 0;
             while (cursor <= input.Length) {
-                if (cursor == input.Length || input[cursor] == '\n') {
-                    board[x, y] = number;
-                    number = 0;
-                    y = 0;
-                    x++;
-                } else if (input[cursor] == ' ') {
-                    if (input[cursor+1] != ' ' && input[cursor-1] != '\n') {
-                        board[x, y] = number;
-                        number = 0;
-                        y++;
-                    }
-                } else {number = 10 * number + (int)(input[cursor] - '0');}
-                cursor++;
-                
-                if (x == 5 && y == 0) {
-                    (int drawIdx, int total) = CheckBoardWin(board, toDraw);
-                    if (drawIdx < minDrawIdx) {
-                        minDrawIdx = drawIdx;
-                        minTotal = total;
-                    }
-                    x = 0;
-                    y = 0;
-                    cursor++;
+                cursor = ParseBoard(input, cursor, board); 
+                (int drawIdx, int total) = CheckBoardWin(board, toDraw);
+                if (drawIdx < minDrawIdx) {
+                    minDrawIdx = drawIdx;
+                    minTotal = total;
                 }
+                cursor++;
             }
             return minTotal * toDraw[minDrawIdx];
         }
