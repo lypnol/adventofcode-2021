@@ -9,7 +9,6 @@ def list_sum(lst):
 
 def compute_winner(board, tirage, last):
     res = 0
-    print(board, tirage, last)
     for line in board:
         for elt in line:
             if not(elt in tirage):
