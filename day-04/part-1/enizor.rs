@@ -29,11 +29,11 @@ fn run(input: &str) -> usize {
     0
 }
 
-type BoardNumber = u16;
+type BoardNumber = i8;
 
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 struct Board {
-    grid: [Option<BoardNumber>; 25],
+    grid: [BoardNumber; 25],
     sum: usize,
 }
 
@@ -41,25 +41,47 @@ impl Board {
     /// Inserts nb into the board and check the winning condition
     /// Returns the board's score when it wons
     fn insert_nb(&mut self, nb: BoardNumber) -> Option<usize> {
-        let mut solutions = [true; 10];
         for (i, check) in self.grid.iter_mut().enumerate() {
             match *check {
-                Some(x) if x == nb => {
-                    *check = None;
+                x if x == nb => {
+                    *check = -1;
                     self.sum -= nb as usize;
+                    if self.check_win(i) {
+                        return Some(self.sum * nb as usize);
+                    } else {
+                        return None;
+                    }
                 }
-                Some(_) => {
-                    solutions[i / 5] = false;
-                    solutions[5 + i % 5] = false;
-                }
-                None => {}
+                _ => {}
             }
         }
-        if solutions.contains(&true) {
-            Some(self.sum * nb as usize)
-        } else {
-            None
+        None
+    }
+
+    // Check if adding the last number at (row, col) made the board win
+    fn check_win(&self, i: usize) -> bool {
+        // check if the row is completed
+        let start_line = i - (i % 5);
+        let mut possible = true;
+        for k in 0..5 {
+            if self.grid[start_line + k] >= 0 {
+                possible = false;
+                break;
+            }
         }
+        if possible {
+            return true;
+        }
+        // check if the col is completed
+        let col = i % 5;
+        possible = true;
+        for k in 0..5 {
+            if self.grid[col + k * 5] >= 0 {
+                possible = false;
+                break;
+            }
+        }
+        possible
     }
 }
 
@@ -70,8 +92,9 @@ impl FromStr for Board {
         let mut board = Board::default();
         for (i, nb_s) in s.split_whitespace().enumerate() {
             let nb: BoardNumber = nb_s.parse()?;
+            assert!(nb >= 0);
             board.sum += nb as usize;
-            board.grid[i] = Some(nb);
+            board.grid[i] = nb;
         }
         Ok(board)
     }
@@ -118,31 +141,8 @@ mod tests {
             board,
             Board {
                 grid: [
-                    Some(22),
-                    Some(13),
-                    Some(17),
-                    Some(11),
-                    Some(0),
-                    Some(8),
-                    Some(2),
-                    Some(23),
-                    Some(4),
-                    Some(24),
-                    Some(21),
-                    Some(9),
-                    Some(14),
-                    Some(16),
-                    Some(7),
-                    Some(6),
-                    Some(10),
-                    Some(3),
-                    Some(18),
-                    Some(5),
-                    Some(1),
-                    Some(12),
-                    Some(20),
-                    Some(15),
-                    Some(19)
+                    22, 13, 17, 11, 0, 8, 2, 23, 4, 24, 21, 9, 14, 16, 7, 6, 10, 3, 18, 5, 1, 12,
+                    20, 15, 19
                 ],
                 sum: 63 + 61 + 67 + 42 + 67
             }
