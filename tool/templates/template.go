@@ -9,6 +9,7 @@ import (
 
 func run(s string) interface{} {
 	// Your code goes here
+	return struct{}{}
 }
 
 func main() {
@@ -23,6 +24,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		// Remove extra newline
+		input = input[:len(input)-1]
 	} else {
 		// Read input from stdin
 		input, err = ioutil.ReadAll(os.Stdin)
