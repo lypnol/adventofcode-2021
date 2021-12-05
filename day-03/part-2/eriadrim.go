@@ -12,75 +12,80 @@ func run(b []byte) interface{} {
 	for i := 0; i < 1000; i++ {
 		tab[i] = convertToInt(b[13*i:13*i+12])
 	}
-
 	var gamma, epsilon uint16 = 0, 0
 
 	// first iter
-	m := 0
+	cursor := 0
 	for j := 0; j < 1000; j++ {
-		if b[13*j] == '1' {
-			m++
+		if tab[j] & 0x800 != 0 {
+			tab[j], tab[cursor] = tab[cursor], tab[j]
+			cursor++
 		}
 	}
-	if m >= 500 {
-		gamma = 0x800
+	firstG, lastG := 0, 1000
+	firstE, lastE := 0, 1000
+	if cursor >= 500 {
+		lastG = cursor
+		firstE = cursor
 	} else {
-		epsilon = 0x800
+		lastE = cursor
+		firstG = cursor
 	}
 
-	var p, mask uint16 = 0x400, 0x800
-	var lastG uint16
+	first, last := firstG, lastG
+	var p = uint16(0x400)
 	for i := 1; i < 12; i++ {
-		mG, nG := 0, 0
-		for j := 0; j < 1000; j++ {
-			x := tab[j]
-			c := b[13*j+i]
-			if gamma ^ (x & mask) != 0 {
-				continue
-			}
-
-			nG++
-			if c == '1' {
-				mG++
-			}
-			lastG = x
-		}
-		if nG == 1 {
-			gamma = lastG
+		if last - first < 2 {
+			gamma = tab[first]
 			break
 		}
-		if mG * 2 >= nG {
-			gamma |= p
+		n := last-first
+		m := 0
+		newCursor := first
+		for j := first; j < last; j++ {
+			x := tab[j]
+			if x & p != 0 {
+				tab[newCursor], tab[j] = tab[j], tab[newCursor]
+				newCursor++
+				m++
+			}
 		}
-		mask |= p
+
+		if m * 2 >= n {
+			last = newCursor
+		} else {
+			first = newCursor
+		}
 		p >>= 1
 	}
+	if gamma == 0 {
+		gamma = tab[first]
+	}
 
-	p, mask = 0x400, 0x800
-	var lastE uint16
+	first, last = firstE, lastE
+	p = uint16(0x400)
 	for i := 1; i < 12; i++ {
-		mE, nE := 0, 0
-		for j := 0; j < 1000; j++ {
-			x := tab[j]
-			c := b[13*j+i]
-			if epsilon ^ (x & mask) != 0 {
-				continue
-			}
-
-			nE++
-			if c == '1' {
-				mE++
-			}
-			lastE = x
-		}
-		if nE == 1 {
-			epsilon = lastE
+		if last - first < 2 {
+			epsilon = tab[first]
 			break
 		}
-		if mE * 2 < nE {
-			epsilon |= p
+		n := last-first
+		m := 0
+		newCursor := first
+		for j := first; j < last; j++ {
+			x := tab[j]
+			if x & p != 0 {
+				tab[newCursor], tab[j] = tab[j], tab[newCursor]
+				newCursor++
+				m++
+			}
 		}
-		mask |= p
+
+		if m * 2 >= n {
+			first = newCursor
+		} else {
+			last = newCursor
+		}
 		p >>= 1
 	}
 
