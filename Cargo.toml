@@ -151,3 +151,11 @@ path = "./day-04/part-1/juliendoutre.rs"
 [[bin]]
 name = "day-04-part-2-juliendoutre"
 path = "./day-04/part-2/juliendoutre.rs"
+
+[[bin]]
+name = "day-05-part-1-juliendoutre"
+path = "./day-05/part-1/juliendoutre.rs"
+
+[[bin]]
+name = "day-05-part-2-juliendoutre"
+path = "./day-05/part-2/juliendoutre.rs"
