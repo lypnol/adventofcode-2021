@@ -9,7 +9,6 @@ def list_sum(lst):
 
 def compute_winner(board, tirage, last):
     res = 0
-    print(board, tirage, last)
     for line in board:
         for elt in line:
             if not(elt in tirage):
@@ -53,18 +52,18 @@ class ManutSubmission(SubmissionPy):
                 if not(i in winning_board):
                     x,y = find(ti, boards[i])
                     if x != -1:
-                        if x == y:
-                            coords["board_" + str(i) + "d1"] += 1
-                            if coords["board_" + str(i) + "d1"] == 5:
-                                winning_board.add(i)
-                                if sudden_death:
-                                    return compute_winner(boards[i], (tirages[:k+1]), ti)
-                        elif (x == 4-y):
-                            coords["board_" + str(i) + "d2"] += 1
-                            if coords["board_" + str(i) + "d2"] == 5:
-                                winning_board.add(i)
-                                if sudden_death:
-                                    return compute_winner(boards[i], (tirages[:k+1]), ti)
+                        # if x == y:
+                        #     coords["board_" + str(i) + "d1"] += 1
+                        #     if coords["board_" + str(i) + "d1"] == 5:
+                        #         winning_board.add(i)
+                        #         if sudden_death:
+                        #             return compute_winner(boards[i], (tirages[:k+1]), ti)
+                        # elif (x == 4-y):
+                        #     coords["board_" + str(i) + "d2"] += 1
+                        #     if coords["board_" + str(i) + "d2"] == 5:
+                        #         winning_board.add(i)
+                        #         if sudden_death:
+                        #             return compute_winner(boards[i], (tirages[:k+1]), ti)
                         coords["board_" + str(i) + "c"+str(y)] += 1
                         if coords["board_" + str(i) + "c"+str(y)] == 5:
                             winning_board.add(i)

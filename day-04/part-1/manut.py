@@ -27,7 +27,7 @@ def find(x, board):
 class ManutSubmission(SubmissionPy):
     def run(self, s):
         n = 5
-        m = 3
+        # m = 3
         m = 100
         f = s.split('\n')
         tirages = f[0].split(',')
@@ -36,7 +36,7 @@ class ManutSubmission(SubmissionPy):
         for i in range(m):
             board = []
             for j in range(n):
-                coords["board_" + str(i) + "c"+str(j)] = 0
+                coords["board_" + str(i) + "c" + str(j)] = 0
                 coords["board_" + str(i) + "l" + str(j)] = 0
                 board.append(list(filter(lambda x : x != '', f[2+i*(n+1) +j].split(' '))))
             coords["board_" + str(i) + "d1"] = 0
@@ -48,19 +48,19 @@ class ManutSubmission(SubmissionPy):
             for i in range(len(boards)):
                 x,y = find(ti, boards[i])
                 if x != -1:
-                    if x == y:
-                        coords["board_" + str(i) + "d1"] += 1
-                        if coords["board_" + str(i) + "d1"] == 5:
-                            return compute_winner(boards[i], (tirages[:k+1]), ti)
-                    elif (x == 4-y):
-                        coords["board_" + str(i) + "d2"] += 1
-                        if coords["board_" + str(i) + "d2"] == 5:
-                            return compute_winner(boards[i], (tirages[:k+1]), ti)
-                    coords["board_" + str(i) + "c"+str(y)] += 1
-                    if coords["board_" + str(i) + "c"+str(y)] == 5:
+                    # if x == y:
+                    #     coords["board_" + str(i) + "d1"] += 1
+                    #     if coords["board_" + str(i) + "d1"] == 5:
+                    #         return compute_winner(boards[i], (tirages[:k+1]), ti)
+                    # elif (x == 4-y):
+                    #     coords["board_" + str(i) + "d2"] += 1
+                    #     if coords["board_" + str(i) + "d2"] == 5:
+                    #         return compute_winner(boards[i], (tirages[:k+1]), ti)
+                    coords["board_" + str(i) + "c" + str(y)] += 1
+                    if coords["board_" + str(i) + "c" + str(y)] == 5:
                         return compute_winner(boards[i], (tirages[:k+1]), ti)
-                    coords["board_" + str(i) + "l"+str(x)] += 1
-                    if coords["board_" + str(i) + "l"+str(x)] == 5:
+                    coords["board_" + str(i) + "l" + str(x)] += 1
+                    if coords["board_" + str(i) + "l" + str(x)] == 5:
                         return compute_winner(boards[i], (tirages[:k+1]), ti)
 
 
