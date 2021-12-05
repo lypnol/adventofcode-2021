@@ -1,10 +1,18 @@
 name: CI
 
 on:
+  pull_request:
   push:
     branches:
       - master
-  pull_request:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: Run specific days (space delimiter)
+        required: true
+
+env:
+  INPUTS_DAYS: ${{ github.event.inputs.days }}
 
 jobs:
   build:
@@ -94,7 +102,7 @@ jobs:
       # - name: deps-cargo
       #   if: steps.cache-cargo.outputs.cache-hit != 'true'
       #   run: curl https://sh.rustup.rs -sSf -o rustup.sh && sh rustup.sh -y
-    
+
       - uses: actions/setup-dotnet@v1
         with:
           dotnet-version: '6.0.x'
