@@ -6,16 +6,16 @@ namespace Aoc
 {
     class Solution
     {
-        private static string solve(string input) {
+        private static int Solve(string input) {
             // Your code goes here
-            return "Nothing";
+            return 0;
         }
 
         public static void Main(string[] args) {
             string input = args[0];
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
-            string result = solve(input);
+            int result = Solve(input);
             watch.Stop();
             Console.WriteLine("_duration: " + watch.Elapsed.TotalMilliseconds + "\n" + result);
         }
