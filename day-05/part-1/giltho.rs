@@ -35,38 +35,37 @@ enum State {
     Y2,
 }
 
+macro_rules! update_cell {
+    ($coord: expr) => {
+        let z = GRID.get_unchecked_mut($coord);
+        match z {
+            Overlap::Zero => {
+                *z = Overlap::One;
+            }
+            Overlap::One => {
+                *z = Overlap::Saturated;
+                CLASHES += 1;
+            }
+            _ => (),
+        }
+    };
+}
+
 // unsafe in concurrent settings
-#[inline(always)]
-unsafe fn add_to_grid(x1: usize, y1: usize, x2: usize, y2: usize) {
-    if x1 == x2 {
-        let (min, max) = if y1 < y2 { (y1, y2) } else { (y2, y1) };
-        for i in min..max + 1 {
-            match GRID[MAX_COORD * x1 + i] {
-                Overlap::Zero => {
-                    GRID[MAX_COORD * x1 + i] = Overlap::One;
-                }
-                Overlap::One => {
-                    GRID[MAX_COORD * x1 + i] = Overlap::Saturated;
-                    CLASHES += 1;
-                }
-                _ => (),
+macro_rules! add_to_grid {
+    ($x1: expr, $y1: expr, $x2: expr, $y2: expr) => {
+        if $x1 == $x2 {
+            let (min, max) = if $y1 < $y2 { ($y1, $y2) } else { ($y2, $y1) };
+            for i in min..max + 1 {
+                update_cell!(MAX_COORD * $x1 + i);
+            }
+        } else if $y1 == $y2 {
+            let (min, max) = if $x1 < $x2 { ($x1, $x2) } else { ($x2, $x1) };
+            for i in min..max + 1 {
+                update_cell!(MAX_COORD * i + $y1);
             }
         }
-    } else if y1 == y2 {
-        let (min, max) = if x1 < x2 { (x1, x2) } else { (x2, x1) };
-        for i in min..max + 1 {
-            match GRID[MAX_COORD * i + y1] {
-                Overlap::Zero => {
-                    GRID[MAX_COORD * i + y1] = Overlap::One;
-                }
-                Overlap::One => {
-                    GRID[MAX_COORD * i + y1] = Overlap::Saturated;
-                    CLASHES += 1;
-                }
-                _ => (),
-            }
-        }
-    }
+    };
 }
 
 fn run(input: &str) -> u32 {
@@ -78,9 +77,9 @@ fn run(input: &str) -> u32 {
     let mut y1 = 0;
     let mut idx = 0;
     while idx < bytes.len() {
-        match (state, bytes[idx]) {
-            (State::Y2, 0 | b'\n') => {
-                unsafe { add_to_grid(x1, y1, x2, num_acc) };
+        match (state, unsafe { bytes.get_unchecked(idx) }) {
+            (State::Y2, b'\n') => {
+                unsafe { add_to_grid!(x1, y1, x2, num_acc) };
                 x1 = 0;
                 x2 = 0;
                 y1 = 0;
@@ -112,7 +111,7 @@ fn run(input: &str) -> u32 {
             }
         }
     }
-    unsafe { add_to_grid(x1, y1, x2, num_acc) };
+    unsafe { add_to_grid!(x1, y1, x2, num_acc) };
     unsafe { CLASHES }
 }
 

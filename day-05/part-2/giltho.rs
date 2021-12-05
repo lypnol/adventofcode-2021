@@ -37,12 +37,13 @@ enum State {
 
 macro_rules! update_cell {
     ($coord: expr) => {
-        match GRID[$coord] {
+        let z = GRID.get_unchecked_mut($coord);
+        match z {
             Overlap::Zero => {
-                GRID[$coord] = Overlap::One;
+                *z = Overlap::One;
             }
             Overlap::One => {
-                GRID[$coord] = Overlap::Saturated;
+                *z = Overlap::Saturated;
                 CLASHES += 1;
             }
             _ => (),
@@ -92,8 +93,8 @@ fn run(input: &str) -> u32 {
     let mut y1 = 0;
     let mut idx = 0;
     while idx < bytes.len() {
-        match (state, bytes[idx]) {
-            (State::Y2, 0 | b'\n') => {
+        match (state, unsafe { bytes.get_unchecked(idx) }) {
+            (State::Y2, b'\n') => {
                 unsafe { add_to_grid!(x1, y1, x2, num_acc) };
                 x1 = 0;
                 x2 = 0;
