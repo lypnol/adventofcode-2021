@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"io/ioutil"
-	"os"
-	"time"
+"fmt"
+"io/ioutil"
+"os"
+"time"
 )
 
 const (
@@ -14,15 +14,13 @@ const (
 	sideSize         = maxSize/ bitPerSideSquare
 	bufferSize       = sideSize * sideSize
 
-	one, fullRow, fullCol uint16 = 1, 0xf, 0x1111
+	zero, one, fullRow, fullCol uint16 = 0, 1, 0xf, 0x1111
 )
 
 func run(s []byte) int {
 	var buffer, over [bufferSize]uint16
 	cursor := 0
 	var minID, maxID int
-	var minSquare, maxSquare, square uint16
-	var increment int
 	for i := 0; i < 500; i++ {
 		// parse values
 		x1 := 0
@@ -65,10 +63,25 @@ func run(s []byte) int {
 			minShift := min%bitPerSideSquare
 			maxShift := max%bitPerSideSquare
 
-			minSquare = (fullRow ^ ((one << minShift) - 1)) << rowShift
-			maxSquare = ((one << (maxShift+1)) - 1) << rowShift
-			square = fullRow << rowShift
-			increment = 1
+			minSquare := (fullRow ^ ((one << minShift) - 1)) << rowShift
+			maxSquare := ((one << (maxShift+1)) - 1) << rowShift
+			if minID == maxID {
+				row := minSquare & maxSquare
+				over[minID] |= buffer[minID] & row
+				buffer[minID] |= row
+				continue
+			}
+
+			square := fullRow << rowShift
+			for id := minID + 1; id < maxID; id+=1 {
+				over[id] |= buffer[id] & square
+				buffer[id] |= square
+			}
+			over[minID] |= buffer[minID] & minSquare
+			buffer[minID] |= minSquare
+
+			over[maxID] |= buffer[maxID] & maxSquare
+			buffer[maxID] |= maxSquare
 		} else if y1 == y2 {
 			min, max := x1, x2
 			if x2 < x1 {
@@ -83,47 +96,47 @@ func run(s []byte) int {
 			minShift := min%bitPerSideSquare
 			maxShift := max%bitPerSideSquare
 
-			minSquare = 0
+			minSquare := zero
 			for k := 0; k < minShift; k++ {
 				minSquare <<= bitPerSideSquare
-				minSquare |= 1
+				minSquare |= one
 			}
 			minSquare = (fullCol ^ minSquare) << colShift
 
-			maxSquare = 0
+			maxSquare := zero
 			for k := 0; k < maxShift+1; k++ {
 				maxSquare <<= bitPerSideSquare
-				maxSquare |= 1
+				maxSquare |= one
 			}
 			maxSquare = maxSquare << colShift
-			square = fullCol << colShift
-			increment = sideSize
+
+			if minID == maxID {
+				row := minSquare & maxSquare
+				over[minID] |= buffer[minID] & row
+				buffer[minID] |= row
+				continue
+			}
+
+			square := fullCol << colShift
+
+			for id := minID + sideSize; id < maxID; id+=sideSize {
+				over[id] |= buffer[id] & square
+				buffer[id] |= square
+			}
+			over[minID] |= buffer[minID] & minSquare
+			buffer[minID] |= minSquare
+
+			over[maxID] |= buffer[maxID] & maxSquare
+			buffer[maxID] |= maxSquare
 		} else {
 			continue
 		}
-
-		if minID == maxID {
-			row := minSquare & maxSquare
-			over[minID] |= buffer[minID] & row
-			buffer[minID] |= row
-			continue
-		}
-
-		for id := minID + increment; id < maxID; id+=increment {
-			over[id] |= buffer[id] & square
-			buffer[id] |= square
-		}
-		over[minID] |= buffer[minID] & minSquare
-		buffer[minID] |= minSquare
-
-		over[maxID] |= buffer[maxID] & maxSquare
-		buffer[maxID] |= maxSquare
 	}
 
 	res := 0
 	for i := 0; i < bufferSize; i++ {
-		if over[i] != 0 {
-			res += count(over[i])
+		if buffer[i] != 0 {
+			res += count(buffer[i])
 		}
 	}
 	return res
