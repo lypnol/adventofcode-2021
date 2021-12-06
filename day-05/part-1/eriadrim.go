@@ -1,10 +1,10 @@
 package main
 
 import (
-"fmt"
-"io/ioutil"
-"os"
-"time"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"time"
 )
 
 const (
@@ -135,8 +135,8 @@ func run(s []byte) int {
 
 	res := 0
 	for i := 0; i < bufferSize; i++ {
-		if buffer[i] != 0 {
-			res += count(buffer[i])
+		if over[i] != 0 {
+			res += count(over[i])
 		}
 	}
 	return res
