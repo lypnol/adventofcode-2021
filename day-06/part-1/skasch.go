@@ -14,29 +14,24 @@ const CYCLE = 7
 const NEW = 2
 const DAYS = 80
 
-func parse(s string) []int {
+func parse(s string) [CYCLE + NEW]int {
 	strs := strings.Split(s, ",")
-	res := make([]int, 0, len(strs))
+	mem := [CYCLE + NEW]int{0}
 	for _, str := range strs {
 		v, err := strconv.Atoi(str)
 		if err != nil {
 			log.Print(err)
 		}
-		res = append(res, v)
+		mem[v]++
 	}
-	return res
+	return mem
 }
 
 func run(s string) int {
 	// Your code goes here
-	vals := parse(s)
-	mem := make([]int, CYCLE+NEW)
-	for _, val := range vals {
-		mem[val] += 1
-	}
-	day := DAYS
-	news := make([]int, NEW)
-	for day >= CYCLE {
+	mem := parse(s)
+	news := [NEW]int{0}
+	for day := CYCLE; day < DAYS; day += CYCLE {
 		for i := 0; i < NEW; i++ {
 			news[i] = mem[i+CYCLE]
 			mem[i+CYCLE] = 0
@@ -47,15 +42,13 @@ func run(s string) int {
 		for i := 0; i < NEW; i++ {
 			mem[i] += news[i]
 		}
-		day -= CYCLE
 	}
 	res := 0
-	for val, cnt := range mem {
-		if val >= day {
-			res += cnt
-		} else {
-			res += 2 * cnt
-		}
+	for idx := 0; idx < (DAYS % CYCLE); idx++ {
+		res += 2 * mem[idx]
+	}
+	for idx := (DAYS % CYCLE); idx < CYCLE+NEW; idx++ {
+		res += mem[idx]
 	}
 	return res
 }
