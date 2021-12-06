@@ -5,6 +5,9 @@ authors = []
 rust-version = "1.56"
 edition="2021"
 
+[profile.release]
+debug = true
+
 [dependencies]
 
 [[bin]]
@@ -232,3 +235,11 @@ path = "./day-07/part-1/juliendoutre.rs"
 [[bin]]
 name = "day-07-part-2-juliendoutre"
 path = "./day-07/part-2/juliendoutre.rs"
+
+[[bin]]
+name = "day-04-part-1-thomren"
+path = "./day-04/part-1/thomren.rs"
+
+[[bin]]
+name = "day-04-part-2-thomren"
+path = "./day-04/part-2/thomren.rs"
