@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 # project
+from tool.runners.awk import SubmissionAwk
 from tool.runners.bash import SubmissionBash
 from tool.runners.c import SubmissionC
 from tool.runners.cpp import SubmissionCpp
@@ -26,6 +27,7 @@ from tool.runners.zig import SubmissionZig
 from tool.utils import load_subclass
 
 TOOL_BY_LANGUAGE = {
+    "awk": "awk",
     "c": "gcc",
     "cpp": "g++",
     "cs": "dotnet",
@@ -62,6 +64,8 @@ def load_submission_runnable(path, language):
         return load_subclass(path, SubmissionPy, exclude=[SubmissionWrapper])
     elif language == "pyx":
         return SubmissionPyx(path)
+    elif language == "awk":
+        return SubmissionAwk(path)
     elif language == "c":
         return SubmissionC(path)
     elif language == "cpp":
