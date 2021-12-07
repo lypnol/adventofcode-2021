@@ -9,5 +9,3 @@ class FrenkiSubmission(SubmissionPy):
     for i in d:
       r += abs(m-i)
     return r
-
-      
