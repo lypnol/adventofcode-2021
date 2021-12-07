@@ -57,46 +57,42 @@ func computeRate(input [][]int, lineNb int) int {
 	return result
 }
 
-
-func puzzle(input [][]int) int {
-
+func findRate(input [][]int, bit_to_take_fn func(int, int) int) int {
 	nbLines := len(input)
 	nbCols := len(input[0])
 
-	oxygenRate :=0
-	co2Rate := 0
-
-	var linesForOxygenRate []int = initLines(nbLines)
-	var linesForCO2Rate []int = initLines(nbLines)
+	var linesForRate []int = initLines(nbLines)
 
 	for colIdx := 0; colIdx < nbCols; colIdx++ {
-		bitLines := findZeroAndOneFrequency(input, colIdx, linesForOxygenRate)
+		bitLines := findZeroAndOneFrequency(input, colIdx, linesForRate)
 		nbZeros := len(bitLines[0])
 		nbOnes := len(bitLines[1])
-		if nbZeros > nbOnes {
-			linesForOxygenRate = bitLines[0]
-		} else {
-			linesForOxygenRate = bitLines[1]
-		}
-		if len(linesForOxygenRate) == 1 {
-			oxygenRate = computeRate(input, linesForOxygenRate[0])
-			break
+
+		linesForRate = bitLines[bit_to_take_fn(nbZeros, nbOnes)]
+
+		if len(linesForRate) == 1 {
+			return computeRate(input, linesForRate[0])
 		}
 	}
-	for colIdx := 0; colIdx < nbCols; colIdx++ {
-		bitLines := findZeroAndOneFrequency(input, colIdx, linesForCO2Rate)
-		nbZeros := len(bitLines[0])
-		nbOnes := len(bitLines[1])
+	return 0
+}
+
+func puzzle(input [][]int) int {
+
+	oxygenRate := findRate(input, func(nbZeros int, nbOnes int) int {
 		if nbZeros > nbOnes {
-			linesForCO2Rate = bitLines[1]
+			return 0
 		} else {
-			linesForCO2Rate = bitLines[0]
+			return 1
 		}
-		if len(linesForCO2Rate) == 1 {
-			co2Rate = computeRate(input, linesForCO2Rate[0])
-			break
+	})
+	co2Rate := findRate(input, func(nbZeros int, nbOnes int) int {
+		if nbZeros > nbOnes {
+			return 1
+		} else {
+			return 0
 		}
-	}
+	})
 	return oxygenRate * co2Rate
 }
 
