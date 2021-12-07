@@ -25,16 +25,16 @@ fn run(input: [:0]u8) u32 {
     // Iterate over the full input
     var i: usize = 0;
 
-    inline while (bit_pos < LENGTH) : (bit_pos += 1){
+    inline while (bit_pos < LENGTH) : (bit_pos += 1) {
         //std.debug.print("current bit pos: {}\n", .{bit_pos});
         i = bit_pos;
-        while (i < input.len){
-            if (bit_count[bit_pos] >= MAJORITY_THRESHOLD or line_count > MAJORITY_THRESHOLD){
+        while (i < input.len) {
+            if (bit_count[bit_pos] >= MAJORITY_THRESHOLD or line_count > MAJORITY_THRESHOLD) {
                 // Further operations won't change result
                 break;
             }
             //std.debug.print("{c}\n", .{input[i]});
-            if (input[i] == '1'){
+            if (input[i] == '1') {
                 bit_count[bit_pos] += 1;
             }
             i += 13; //prod

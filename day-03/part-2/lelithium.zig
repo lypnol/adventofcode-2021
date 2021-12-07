@@ -113,7 +113,7 @@ fn run(input: [:0]u8) u32 {
                         break;
                     }
                     // If we're not done yet, actualize the next bit_count
-                    if (all_lines[idx][bit_pos + 1] == '1'){
+                    if (all_lines[idx][bit_pos + 1] == '1') {
                         bit_count += 1;
                     }
                 }
