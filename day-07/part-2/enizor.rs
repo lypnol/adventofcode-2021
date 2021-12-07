@@ -1,4 +1,5 @@
 #![feature(int_abs_diff)]
+use std::cmp::Ordering;
 use std::env::args;
 use std::time::Instant;
 
@@ -12,24 +13,35 @@ fn main() {
 
 fn run(input: &str) -> usize {
     let mut crabs = Vec::with_capacity(input.len() / 3);
-    let mut sum = 0;
+    let mut max = 0;
     for s in input.split(',') {
         let c: usize = s.parse().unwrap();
-        sum += c;
         crabs.push(c);
+        max = max.max(c);
     }
-    let mut fuel = sum * (sum + 1) / 2;
-    let mut pos = 0;
+    let mut p0 = 0;
+    let mut p1 = max;
     loop {
-        pos += 1;
-        let new_fuel = crabs
-            .iter()
-            .fold(0, |x, c| x + (c.abs_diff(pos) * (c.abs_diff(pos) + 1) / 2));
-        if new_fuel > fuel {
-            return fuel;
+        let pos = (p0 + p1) / 2;
+        let new_fuel = compute_fuel(pos, &crabs);
+        if (p1 - p0) < 2 {
+            return new_fuel.0.min(new_fuel.1);
         }
-        fuel = new_fuel;
+        match new_fuel.0.cmp(&new_fuel.1) {
+            Ordering::Greater => p0 = pos + 1,
+            Ordering::Less => p1 = pos,
+            Ordering::Equal => return new_fuel.0,
+        }
     }
+}
+
+fn compute_fuel(pos: usize, crabs: &[usize]) -> (usize, usize) {
+    crabs.iter().fold((0, 0), |x, c| {
+        (
+            x.0 + (c.abs_diff(pos) * (c.abs_diff(pos) + 1) / 2),
+            x.1 + (c.abs_diff(pos + 1) * (c.abs_diff(pos + 1) + 1) / 2),
+        )
+    })
 }
 
 #[cfg(test)]
