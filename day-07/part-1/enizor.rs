@@ -11,6 +11,9 @@ fn main() {
     println!("{}", output);
 }
 
+// ∀n, f_n(x) = |x-n| is convex
+// So the fuel computation function F(x) = sum_i(f_i(x)) is convex
+// and we can happily use a dichotomy
 fn run(input: &str) -> usize {
     let mut crabs = Vec::with_capacity(input.len() / 3);
     let mut max = 0;
@@ -21,20 +24,22 @@ fn run(input: &str) -> usize {
     }
     let mut p0 = 0;
     let mut p1 = max;
+    // Invariant: the global minimum is in [p0, p1]
     loop {
         let pos = (p0 + p1) / 2;
         let new_fuel = compute_fuel(pos, &crabs);
         if (p1 - p0) < 2 {
-            return new_fuel.0.min(new_fuel.1);
+            return new_fuel.0.min(new_fuel.1); // cannot divide further
         }
         match new_fuel.0.cmp(&new_fuel.1) {
             Ordering::Greater => p0 = pos + 1,
             Ordering::Less => p1 = pos,
-            Ordering::Equal => return new_fuel.0,
+            Ordering::Equal => return new_fuel.0, // real minimum is between pos and pos+1
         }
     }
 }
 
+/// Computes fuel consumption for pos and pos+1
 fn compute_fuel(pos: usize, crabs: &[usize]) -> (usize, usize) {
     crabs.iter().fold((0, 0), |x, c| {
         (x.0 + c.abs_diff(pos), x.1 + c.abs_diff(pos + 1))
