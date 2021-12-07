@@ -9,11 +9,6 @@ import (
 	"time"
 )
 
-type Move struct {
-	direction int
-	count int
-}
-
 func parseData(input string) [][]int {
 
 	var data [][]int
