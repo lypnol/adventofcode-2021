@@ -1,0 +1,67 @@
+#![feature(int_abs_diff)]
+use std::cmp::Ordering;
+use std::env::args;
+use std::time::Instant;
+
+fn main() {
+    let now = Instant::now();
+    let output = run(&args().nth(1).expect("Please provide an input"));
+    let elapsed = now.elapsed();
+    println!("_duration:{}", elapsed.as_secs_f64() * 1000.);
+    println!("{}", output);
+}
+
+// Fuel consumption at pos x for crab at n:
+// F_n(x) = | g_n(x) = (n-x)(n-x+1)/2 if x <= n
+//          | h_n(x) = (x-n)(x-n+1)/2 if x >= n
+// g_n(x)-h_n(x) = 2(n-x) so:
+// ∀x<=n, g_n(x) >= h_n(x)
+// ∀x>=n, g_n(x) <= h_n(x)
+// we can rewrite F_n(x) = max(g_n(x), h_n(x))
+// and since g_n, h_n are convex so is F_n
+// So the fuel computation function F(x) = sum_i(F_i(x)) is convex
+// and we can happily use a dichotomy
+fn run(input: &str) -> usize {
+    let mut crabs = Vec::with_capacity(input.len() / 3);
+    let mut max = 0;
+    for s in input.split(',') {
+        let c: usize = s.parse().unwrap();
+        crabs.push(c);
+        max = max.max(c);
+    }
+    let mut p0 = 0;
+    let mut p1 = max;
+    // Invariant: the global minimum is in [p0, p1]
+    loop {
+        let pos = (p0 + p1) / 2;
+        let new_fuel = compute_fuel(pos, &crabs);
+        if (p1 - p0) < 2 {
+            return new_fuel.0.min(new_fuel.1); // cannot divide further
+        }
+        match new_fuel.0.cmp(&new_fuel.1) {
+            Ordering::Greater => p0 = pos + 1,
+            Ordering::Less => p1 = pos,
+            Ordering::Equal => return new_fuel.0, // real minimum is between pos and pos+1
+        }
+    }
+}
+
+/// Computes fuel consumption for pos and pos+1
+fn compute_fuel(pos: usize, crabs: &[usize]) -> (usize, usize) {
+    crabs.iter().fold((0, 0), |x, c| {
+        (
+            x.0 + (c.abs_diff(pos) * (c.abs_diff(pos) + 1) / 2),
+            x.1 + (c.abs_diff(pos + 1) * (c.abs_diff(pos + 1) + 1) / 2),
+        )
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn run_test() {
+        assert_eq!(run("16,1,2,0,4,2,7,1,2,14"), 168)
+    }
+}
