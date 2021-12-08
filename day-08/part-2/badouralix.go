@@ -8,48 +8,51 @@ import (
 	"time"
 )
 
-type DigitSet struct {
-	// length is the total number of segments turned on
-	length int
+// DigitSet is array containing the status of each segments
+// a is at index 1, b is at index 2, c is at index 3, etc.
+// true means it is turned on, false means it is turned off
+type DigitSet [7]bool
 
-	// segments is the status of each segments
-	// a is at index 1, b is at index 2, c is at index 3, etc.
-	// true means it is turned on, false means it is turned off
-	segments [7]bool
-}
-
-// NewDigitSet creates a new set from a string
-func NewDigitSet(digitstr string) DigitSet {
+// NewDigitSetFromString creates a new set from a string
+func NewDigitSetFromString(digitstr string) DigitSet {
 	digitset := DigitSet{}
 	for _, l := range digitstr {
-		digitset.Add(l)
+		idx := int(l - 'a')
+		digitset[idx] = true
 	}
 	return digitset
 }
 
-// Add adds a element to the set and returns it
-func (ds *DigitSet) Add(l rune) DigitSet {
-	idx := int(l - 'a')
-	if !ds.segments[idx] {
-		ds.length++
-		ds.segments[idx] = true
+// NewDigitSetFromXor creates a new set as the xor of two sets
+func NewDigitSetFromXor(ds1, ds2 DigitSet) DigitSet {
+	digitset := DigitSet{}
+	for idx := 0; idx < 7; idx++ {
+		if ds1[idx] != ds2[idx] {
+			digitset[idx] = true
+		}
 	}
-	return *ds
-}
-
-// Len returns the size of the set
-func (ds DigitSet) Len() int {
-	return ds.length
+	return digitset
 }
 
 // Includes returns true if and only if all elements of subds exist in ds
 func (ds DigitSet) Includes(subds DigitSet) bool {
-	for idx := range subds.segments {
-		if subds.segments[idx] && !ds.segments[idx] {
+	for idx := range subds {
+		if subds[idx] && !ds[idx] {
 			return false
 		}
 	}
 	return true
+}
+
+// Len returns the size of the set
+func (ds DigitSet) Len() int {
+	length := 0
+	for _, v := range ds {
+		if v {
+			length++
+		}
+	}
+	return length
 }
 
 func run(s string) interface{} {
@@ -60,14 +63,14 @@ func run(s string) interface{} {
 		digitsettoactualdigit := make(map[DigitSet]int, 10)
 		actualdigittodigitset := make(map[int]DigitSet, 10)
 
-		digitsets := make(map[DigitSet]struct{}, 6)
+		digitsets := make([]DigitSet, 6)
 
 		split := strings.Split(line, " | ")
 		signal := strings.Split(split[0], " ")
 		output := strings.Split(split[1], " ")
 
 		for _, digitstr := range signal {
-			digitset := NewDigitSet(digitstr)
+			digitset := NewDigitSetFromString(digitstr)
 
 			switch digitset.Len() {
 			case 2:
@@ -83,44 +86,41 @@ func run(s string) interface{} {
 				digitsettoactualdigit[digitset] = 8
 				actualdigittodigitset[8] = digitset
 			default:
-				digitsets[digitset] = struct{}{}
+				digitsets = append(digitsets, digitset)
 			}
 		}
 
 		// Apply some magic to identify all signal patterns
-		for digitset := range digitsets {
-			if digitset.Len() == 5 && digitset.Includes(actualdigittodigitset[1]) {
-				digitsettoactualdigit[digitset] = 3
-				actualdigittodigitset[3] = digitset
-				delete(digitsets, digitset)
-			} else if digitset.Len() == 6 && !digitset.Includes(actualdigittodigitset[7]) {
-				digitsettoactualdigit[digitset] = 6
-				actualdigittodigitset[6] = digitset
-				delete(digitsets, digitset)
-			} else if digitset.Len() == 6 && digitset.Includes(actualdigittodigitset[4]) {
-				digitsettoactualdigit[digitset] = 9
-				actualdigittodigitset[9] = digitset
-				delete(digitsets, digitset)
-			} else if digitset.Len() == 6 {
-				digitsettoactualdigit[digitset] = 0
-				actualdigittodigitset[0] = digitset
-				delete(digitsets, digitset)
-			}
-		}
-
-		for digitset := range digitsets {
-			if actualdigittodigitset[6].Includes(digitset) {
-				digitsettoactualdigit[digitset] = 5
-				actualdigittodigitset[5] = digitset
-			} else {
-				digitsettoactualdigit[digitset] = 2
-				actualdigittodigitset[2] = digitset
+		for _, digitset := range digitsets {
+			switch digitset.Len() {
+			case 5:
+				if digitset.Includes(actualdigittodigitset[1]) {
+					digitsettoactualdigit[digitset] = 3
+					actualdigittodigitset[3] = digitset
+				} else if digitset.Includes(NewDigitSetFromXor(actualdigittodigitset[4], actualdigittodigitset[7])) {
+					digitsettoactualdigit[digitset] = 5
+					actualdigittodigitset[5] = digitset
+				} else {
+					digitsettoactualdigit[digitset] = 2
+					actualdigittodigitset[2] = digitset
+				}
+			case 6:
+				if digitset.Includes(actualdigittodigitset[4]) {
+					digitsettoactualdigit[digitset] = 9
+					actualdigittodigitset[9] = digitset
+				} else if !digitset.Includes(actualdigittodigitset[7]) {
+					digitsettoactualdigit[digitset] = 6
+					actualdigittodigitset[6] = digitset
+				} else {
+					digitsettoactualdigit[digitset] = 0
+					actualdigittodigitset[0] = digitset
+				}
 			}
 		}
 
 		value := 0
 		for _, digitstr := range output {
-			digitset := NewDigitSet(digitstr)
+			digitset := NewDigitSetFromString(digitstr)
 
 			value *= 10
 			value += digitsettoactualdigit[digitset]
