@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// DigitSet is array containing the status of each segments
+// DigitSet is an array containing the status of each segment
 // a is at index 1, b is at index 2, c is at index 3, etc.
 // true means it is turned on, false means it is turned off
 type DigitSet [7]bool
