@@ -17,78 +17,58 @@ fn dbg_deductions(deductions: &[u8]) {
     }
 }
 
-/// Analyses the clue when the pattern is unique, i.e. with a length of 2, 3, or 4
-fn analyse_uniq(clue: u8, bd: &mut u8, cf: &mut u8, n: u8, solved: &mut [u8; 10]) {
-    if n == 3 {
-        solved[7] = clue;
-    } else if n == 2 {
-        solved[1] = clue;
-        *cf = clue;
-        *bd &= !clue;
-    } else if n == 4 {
-        solved[4] = clue;
-        *bd = clue & !*cf;
-    }
-}
-
 /// Analyses a pattern with multiple possibilities
-fn analyse_complex(clue: u8, bd: &mut u8, cf: &mut u8, n: u8, solved: &mut [u8; 10]) {
+fn solve_clue(clue: u8, bd: u8, cf: u8, n: u8) -> usize {
     // patterns 2, 3, 5
     // changing segments are b,c,e,f
     // with the previous clue of digit 1 we know if the clue contain both segments cf or only one of them
-    let count_cf = (clue & *cf).count_ones();
+    let count_cf = (clue & cf).count_ones();
     // with the previous clues of digit 1 and 4 we know if the clue contain both segments db or only one of them
-    let count_bd = (clue & *bd).count_ones();
-    let digit = match (n, count_bd, count_cf) {
+    let count_bd = (clue & bd).count_ones();
+    match (n, count_bd, count_cf) {
+        (2, _, _) => 1,
+        (3, _, _) => 7,
+        (4, _, _) => 4,
         (5, 1, 1) => 2,
         (5, 1, 2) => 3,
         (5, 2, 1) => 5,
         (6, 2, 2) => 9,
         (6, 1, 2) => 0,
         (6, 2, 1) => 6,
+        (7, _, _) => 8,
         _ => panic!("{} {} {}", n, count_bd, count_cf),
-    };
-    solved[digit] = clue;
+    }
 }
 
 fn solve_line(input: &str) -> usize {
     let mut clues = input.split(' ');
-    let mut complex = [(0, 0); 6];
-    let mut pos_complex = 0;
-    let mut solved = [0; 10];
-    solved[8] = 0x7f;
     let mut cf = 0;
     let mut bd = 0;
     for _ in 0..10 {
         let c = clues.next().unwrap();
         let mut clue_byte = 0;
         let n = c.len();
-        for c in c.as_bytes() {
-            clue_byte |= 1 << (c - b'a');
+        if n == 2 || n == 4 {
+            for c in c.as_bytes() {
+                clue_byte |= 1 << (c - b'a');
+            }
+            if n == 2 {
+                cf = clue_byte;
+                bd &= !clue_byte;
+            } else if n == 4 {
+                bd = clue_byte & !cf;
+            }
         }
-        if n <= 4 {
-            analyse_uniq(clue_byte, &mut bd, &mut cf, n as u8, &mut solved);
-        } else if n <= 6 {
-            complex[pos_complex] = (clue_byte, n as u8);
-            pos_complex += 1;
-        }
-    }
-    for &(c, n) in &complex {
-        analyse_complex(c, &mut bd, &mut cf, n as u8, &mut solved);
     }
     let mut res = 0;
     for c in clues.skip(1) {
         res *= 10;
         let mut clue_byte = 0;
+        let n = c.len() as u8;
         for c in c.as_bytes() {
             clue_byte |= 1 << (c - b'a');
         }
-        res += solved
-            .iter()
-            .enumerate()
-            .find(|(_, &m)| m == clue_byte)
-            .unwrap()
-            .0;
+        res += solve_clue(clue_byte, bd, cf, n)
     }
     res
 }
@@ -107,23 +87,9 @@ mod tests {
 
     #[test]
     fn test_solving() {
-        let mut cf = 0;
-        let mut bd = 0;
-        let mut solved = [0; 10];
-        analyse_uniq(0b00110011, &mut bd, &mut cf, 4, &mut solved); // "abef"
-        assert_eq!(bd, 0b00110011);
-        assert_eq!(solved[4], 0b00110011);
-        analyse_uniq(0b00000011, &mut bd, &mut cf, 2, &mut solved); // "ab"
-        assert_eq!(bd, 0b00110000);
-        assert_eq!(cf, 0b00000011);
-        assert_eq!(solved[1], 0b00000011);
-        analyse_uniq(0b00001011, &mut bd, &mut cf, 3, &mut solved); // "dab"
-        assert_eq!(solved[7], 0b00001011);
-
         // cagedb:
         // since it does not contain "ef" i.e. the segments bd it must be a 0
-        analyse_complex(0b01011111, &mut bd, &mut cf, 6, &mut solved);
-        assert_eq!(solved[0], 0b01011111);
+        assert_eq!(solve_clue(0b01011111, 0b00110000, 0b00000011, 6), 0);
     }
 
     #[test]
