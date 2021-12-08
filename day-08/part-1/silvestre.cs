@@ -8,8 +8,7 @@ namespace Aoc
     class Solution
     {
         private static void UpdateCounter(ref int counter, ref ushort currentLength){
-            if (currentLength < 5) counter++;
-            else if (currentLength > 6) counter++; 
+            if (currentLength < 5 || currentLength > 6) counter++;
         }
         private static int Solve(char[] input) {
             int counter = 0;
@@ -24,12 +23,12 @@ namespace Aoc
                         cursor+=2;
                         break;
                     case (State.Digits, ' '):
-                        UpdateCounter(ref counter, ref currentLength);
+                        if (currentLength < 5 || currentLength > 6) counter++;
                         currentLength = 0;
                         cursor++;
                         break;
                     case (State.Digits, '\n'):
-                        UpdateCounter(ref counter, ref currentLength);
+                        if (currentLength < 5 || currentLength > 6) counter++;
                         state = State.SignalPatterns;
                         cursor++;
                         break;
@@ -39,7 +38,7 @@ namespace Aoc
                         break;
                 }
             }
-            UpdateCounter(ref counter, ref currentLength);
+            if (currentLength < 5 || currentLength > 6) counter++;
             return counter;
         }
 
