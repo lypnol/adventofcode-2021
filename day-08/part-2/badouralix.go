@@ -4,16 +4,23 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"sort"
 	"strings"
 	"time"
 )
 
-type DigitSet map[rune]struct{}
+type DigitSet struct {
+	// length is the total number of segments turned on
+	length int
+
+	// segments is the status of each segments
+	// a is at index 1, b is at index 2, c is at index 3, etc.
+	// true means it is turned on, false means it is turned off
+	segments [7]bool
+}
 
 // NewDigitSet creates a new set from a string
 func NewDigitSet(digitstr string) DigitSet {
-	digitset := make(DigitSet, 7)
+	digitset := DigitSet{}
 	for _, l := range digitstr {
 		digitset.Add(l)
 	}
@@ -21,38 +28,28 @@ func NewDigitSet(digitstr string) DigitSet {
 }
 
 // Add adds a element to the set and returns it
-func (ds DigitSet) Add(l rune) DigitSet {
-	ds[l] = struct{}{}
-	return ds
+func (ds *DigitSet) Add(l rune) DigitSet {
+	idx := int(l - 'a')
+	if !ds.segments[idx] {
+		ds.length++
+		ds.segments[idx] = true
+	}
+	return *ds
 }
 
 // Len returns the size of the set
 func (ds DigitSet) Len() int {
-	return len(ds)
+	return ds.length
 }
 
-// Includes returns true if and only if all elements of dss exist in ds
-func (ds DigitSet) Includes(dss DigitSet) bool {
-	for k := range dss {
-		if _, ok := ds[k]; !ok {
+// Includes returns true if and only if all elements of subds exist in ds
+func (ds DigitSet) Includes(subds DigitSet) bool {
+	for idx := range subds.segments {
+		if subds.segments[idx] && !ds.segments[idx] {
 			return false
 		}
 	}
 	return true
-}
-
-// String returns a string representation of the set
-// This is useful to get comparison operators on sets and use them as map keys
-// See https://go.dev/ref/spec#Comparison_operators
-// This may or may not be deterministic
-// See https://go-review.googlesource.com/c/go/+/142737
-func (ds DigitSet) String() string {
-	keys := make([]string, ds.Len())
-	for k := range ds {
-		keys = append(keys, string(k))
-	}
-	sort.Strings(keys)
-	return strings.Join(keys, "")
 }
 
 func run(s string) interface{} {
@@ -60,10 +57,10 @@ func run(s string) interface{} {
 	result := 0
 
 	for _, line := range strings.Split(s, "\n") {
-		digitstrtoactualdigit := make(map[string]int, 10)
+		digitsettoactualdigit := make(map[DigitSet]int, 10)
 		actualdigittodigitset := make(map[int]DigitSet, 10)
 
-		digitstrs := make(map[string]bool)
+		digitsets := make(map[DigitSet]struct{}, 6)
 
 		split := strings.Split(line, " | ")
 		signal := strings.Split(split[0], " ")
@@ -74,67 +71,50 @@ func run(s string) interface{} {
 
 			switch digitset.Len() {
 			case 2:
-				digitstrtoactualdigit[digitset.String()] = 1
+				digitsettoactualdigit[digitset] = 1
 				actualdigittodigitset[1] = digitset
 			case 3:
-				digitstrtoactualdigit[digitset.String()] = 7
+				digitsettoactualdigit[digitset] = 7
 				actualdigittodigitset[7] = digitset
 			case 4:
-				digitstrtoactualdigit[digitset.String()] = 4
+				digitsettoactualdigit[digitset] = 4
 				actualdigittodigitset[4] = digitset
 			case 7:
-				digitstrtoactualdigit[digitset.String()] = 8
+				digitsettoactualdigit[digitset] = 8
 				actualdigittodigitset[8] = digitset
 			default:
-				digitstrs[digitset.String()] = false
+				digitsets[digitset] = struct{}{}
 			}
 		}
 
-		for digitstr, identified := range digitstrs {
-			if identified {
-				continue
-			}
-			digitset := NewDigitSet(digitstr)
+		// Apply some magic to identify all signal patterns
+		for digitset := range digitsets {
 			if digitset.Len() == 5 && digitset.Includes(actualdigittodigitset[1]) {
-				digitstrtoactualdigit[digitset.String()] = 3
+				digitsettoactualdigit[digitset] = 3
 				actualdigittodigitset[3] = digitset
-				digitstrs[digitstr] = true
+				delete(digitsets, digitset)
 			} else if digitset.Len() == 6 && !digitset.Includes(actualdigittodigitset[7]) {
-				digitstrtoactualdigit[digitset.String()] = 6
+				digitsettoactualdigit[digitset] = 6
 				actualdigittodigitset[6] = digitset
-				digitstrs[digitstr] = true
-			}
-		}
-
-		for digitstr, identified := range digitstrs {
-			if identified {
-				continue
-			}
-			digitset := NewDigitSet(digitstr)
-			if digitset.Len() == 6 && digitset.Includes(actualdigittodigitset[3]) {
-				digitstrtoactualdigit[digitset.String()] = 9
+				delete(digitsets, digitset)
+			} else if digitset.Len() == 6 && digitset.Includes(actualdigittodigitset[4]) {
+				digitsettoactualdigit[digitset] = 9
 				actualdigittodigitset[9] = digitset
-				digitstrs[digitstr] = true
-			} else if digitset.Len() == 6 && !digitset.Includes(actualdigittodigitset[3]) {
-				digitstrtoactualdigit[digitset.String()] = 0
+				delete(digitsets, digitset)
+			} else if digitset.Len() == 6 {
+				digitsettoactualdigit[digitset] = 0
 				actualdigittodigitset[0] = digitset
-				digitstrs[digitstr] = true
+				delete(digitsets, digitset)
 			}
 		}
 
-		for digitstr, identified := range digitstrs {
-			if identified {
-				continue
-			}
-			digitset := NewDigitSet(digitstr)
-			if digitset.Len() == 5 && actualdigittodigitset[6].Includes(digitset) {
-				digitstrtoactualdigit[digitset.String()] = 5
+		for digitset := range digitsets {
+			if actualdigittodigitset[6].Includes(digitset) {
+				digitsettoactualdigit[digitset] = 5
 				actualdigittodigitset[5] = digitset
-				digitstrs[digitstr] = true
-			} else if digitset.Len() == 5 && !actualdigittodigitset[6].Includes(digitset) {
-				digitstrtoactualdigit[digitset.String()] = 2
+			} else {
+				digitsettoactualdigit[digitset] = 2
 				actualdigittodigitset[2] = digitset
-				digitstrs[digitstr] = true
 			}
 		}
 
@@ -143,7 +123,7 @@ func run(s string) interface{} {
 			digitset := NewDigitSet(digitstr)
 
 			value *= 10
-			value += digitstrtoactualdigit[digitset.String()]
+			value += digitsettoactualdigit[digitset]
 		}
 		result += value
 	}
