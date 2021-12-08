@@ -123,7 +123,7 @@ fn run(input: &[u8]) -> usize {
                 six_idx = 0;
             }
             l => {
-                current_digit |= 2u8.pow((l - b'a' + 1) as u32);
+                current_digit |= 2u8 << (l - b'a');
                 word_sz += 1;
             }
         }
