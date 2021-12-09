@@ -25,11 +25,32 @@ namespace Aoc
             return Convert.ToString(counter);
         }
 
+        private static int solve(char[] input){
+            int counter = 0;
+            int depth3 = 0;
+            int depth2 = 0;
+            int depth1 = 0;
+            int current_depth = 0;
+            for(int index=0; index < input.Length; index++) {
+                if (input[index] == '\n') {
+                    if (current_depth > depth3) counter++;
+                    depth3 = depth2;
+                    depth2 = depth1;
+                    depth1 = current_depth;
+                    current_depth = 0;
+                } else {
+                    current_depth = current_depth * 10 + (int)(input[index] - '0');
+                }
+            }
+            if (current_depth != 0 && current_depth > depth3) counter++;
+            return counter - 3;
+        }
+
         public static void Main(string[] args) {
-            string input = args[0];
+            char[] input = args[0].ToCharArray();
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
-            string result = solve(input);
+            int result = solve(input);
             watch.Stop();
             Console.WriteLine("_duration: " + watch.Elapsed.TotalMilliseconds + "\n" + result);
         }

@@ -11,24 +11,18 @@ namespace Aoc
         private static int N_LINES = 1000;
 
         private static int solve(char[] input) {
-            int[] bitCounts = new int[LINE_LENGHT];
-            int colIndex = 0;
-            for (int index = 0; index < input.Length; index++){
-                if (input[index] == '\n'){
-                    colIndex = 0;
-                } else {
-                    bitCounts[colIndex] += (int)(input[index]- '0');
-                    colIndex++;
-                }
-            }
             int gamma = 0;
-            int epsilon = 0;
-            for (int idx = 0;idx<LINE_LENGHT;idx++) {
-                if (2 * bitCounts[idx] > N_LINES) {
-                    gamma += 1 << (LINE_LENGHT - idx - 1);
+            int colCount = 0;
+            int offset = 1;
+            for (int colIndex=LINE_LENGHT-1;colIndex>-1;colIndex--){
+                colCount = 0;
+                for (int cursor=colIndex;cursor<input.Length;cursor+=LINE_LENGHT+1) {
+                    colCount += (int)(input[cursor] - '0');
                 }
-                else {epsilon += 1 << (LINE_LENGHT - idx - 1);}
+                if (2 * colCount > N_LINES) { gamma |= offset;}
+                offset <<= 1;
             }
+            int epsilon = ((1 << LINE_LENGHT)-1) ^ gamma;
             return gamma * epsilon;
         }
 
