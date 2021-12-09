@@ -11,40 +11,45 @@ fn main() {
 }
 
 fn run(input: &str) -> usize {
-    let cave: Vec<Vec<u8>> = input
-        .lines()
-        .map(|line| line.as_bytes().into_iter().map(|x| x - b'0').collect())
-        .collect();
+    let cave = input.as_bytes();
+    let width = input.lines().next().unwrap().len();
+    let height = (input.trim().as_bytes().len() + 1) / (width + 1);
 
-    let basin_centers = find_basin_centers(&cave);
+    let mut basin_sizes = vec![];
 
-    let mut basin_sizes: Vec<usize> = basin_centers
-        .into_iter()
-        .map(|center| basin_size(&cave, center))
-        .collect();
-
-    basin_sizes.sort();
-    basin_sizes.reverse();
-    basin_sizes[0] * basin_sizes[1] * basin_sizes[2]
-}
-
-fn find_basin_centers(cave: &Vec<Vec<u8>>) -> Vec<(usize, usize)> {
-    let mut res = vec![];
-    let width = cave[0].len();
-    let height = cave.len();
-
+    let mut size = 0;
+    let mut visited = HashSet::new();
+    let mut queue = VecDeque::new();
     for i in 0..height {
         for j in 0..width {
-            if neighbors(i, j, height, width)
-                .into_iter()
-                .all(|(ni, nj)| cave[ni][nj] > cave[i][j])
-            {
-                res.push((i, j));
+            if cave[(width + 1) * i + j] == b'9' {
+                continue;
+            }
+            queue.push_back((i, j));
+
+            while queue.len() > 0 {
+                let (i, j) = queue.pop_front().unwrap();
+                if visited.contains(&(i, j)) {
+                    continue;
+                };
+                visited.insert((i, j));
+                size += 1;
+                for n in neighbors(i, j, height, width) {
+                    if !visited.contains(&n) && cave[(width + 1) * n.0 + n.1] != b'9' {
+                        queue.push_back(n);
+                    }
+                }
+            }
+            if size > 0 {
+                basin_sizes.push(size);
+                size = 0;
             }
         }
     }
 
-    res
+    basin_sizes.sort();
+    basin_sizes.reverse();
+    basin_sizes[0] * basin_sizes[1] * basin_sizes[2]
 }
 
 fn neighbors(i: usize, j: usize, height: usize, width: usize) -> Vec<(usize, usize)> {
@@ -62,33 +67,6 @@ fn neighbors(i: usize, j: usize, height: usize, width: usize) -> Vec<(usize, usi
         res.push((i, j + 1));
     }
     res
-}
-
-fn basin_size(cave: &Vec<Vec<u8>>, center: (usize, usize)) -> usize {
-    let width = cave[0].len();
-    let height = cave.len();
-    let (x, y) = center;
-
-    let mut size = 0;
-    let mut visited = HashSet::new();
-    let mut queue = VecDeque::new();
-    queue.push_back((x, y));
-
-    while queue.len() > 0 {
-        let (i, j) = queue.pop_front().unwrap();
-        if visited.contains(&(i, j)) {
-            continue;
-        };
-        visited.insert((i, j));
-        size += 1;
-        for n in neighbors(i, j, height, width) {
-            if !visited.contains(&n) && cave[n.0][n.1] != 9 {
-                queue.push_back(n);
-            }
-        }
-    }
-
-    size
 }
 
 #[cfg(test)]
