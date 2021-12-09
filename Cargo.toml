@@ -5,9 +5,6 @@ authors = []
 rust-version = "1.56"
 edition="2021"
 
-[profile.release]
-debug = true
-
 [dependencies]
 
 [[bin]]
