@@ -14,12 +14,11 @@ class ThChSubmission(SubmissionPy):
             for x in range(len(grid[y])):
                 is_lowest = True
                 for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                    try:
-                        if grid[y][x] >= grid[y + dy][x + dx]:
-                            is_lowest = False
-                            break
-                    except IndexError:
-                        pass
+                    if 0 <= y + dy < len(grid) and 0 <= x + dx < len(
+                            grid[y + dy]) and grid[y][x] >= grid[y + dy][x +
+                                                                         dx]:
+                        is_lowest = False
+                        break
                 if is_lowest:
                     risk_level += grid[y][x] + 1
 
