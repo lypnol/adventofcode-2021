@@ -1,5 +1,6 @@
 from typing import Iterable, List
 import itertools
+import heapq
 from tool.runners.python import SubmissionPy
 
 
@@ -41,19 +42,22 @@ class SkaschSubmission(SubmissionPy):
             if (r, c) in visited or depths[r][c] == MAX_DEPTH:
                 continue
             q = [(r, c)]
-            basins.append(0)
+            basin_size = 0
             while q:
                 r, c = q.pop()
                 if (r, c) in visited:
                     continue
                 visited.add((r, c))
-                basins[-1] += 1
+                basin_size += 1
                 for nr, nc in neighbors(depths, r, c):
                     if (nr, nc) in visited or depths[nr][nc] == MAX_DEPTH:
                         continue
                     q.append((nr, nc))
-        basins.sort()
-        return basins[-1] * basins[-2] * basins[-3]
+            if len(basins) >= 3:
+                heapq.heappushpop(basins, basin_size)
+            else:
+                heapq.heappush(basins, basin_size)
+        return basins[0] * basins[1] * basins[2]
 
 
 def test_skasch():
