@@ -59,7 +59,6 @@ class DivSubmission(SubmissionPy):
             g = "".join(sorted(group))
             number += str(segments_to_digit[g])
 
-        print(number)
         return int(number)
 
 
