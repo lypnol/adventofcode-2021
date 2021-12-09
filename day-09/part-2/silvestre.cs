@@ -8,21 +8,15 @@ namespace Aoc
     {
         private const ushort LINE_LENGTH = 100+1;
         private const ushort N_LINES = 100;
-        private static int BassinSize(char[] input, ushort cursor, ushort col) {
+        private static int BassinSize(char[] input, byte[] visited, Stack<ushort> toVisit, ushort cursor) {
             int size = 0;
             ushort current;
-            Stack<ushort> toVisit = new Stack<ushort>();
-            byte[] visited = new byte[N_LINES*LINE_LENGTH];
             toVisit.Push(cursor);
             while (toVisit.Count > 0) {
                 if (toVisit.Count == 0) continue;
                 current = toVisit.Pop();
-                if (visited[current] == 1 || input[current] == '\n' || input[current] == '9') {
-                    visited[current] = 1;
-                    continue;
-                } else {
+                if (visited[current] == 0 && input[current] != '\n' && input[current] != '9') {
                     ++size;
-                    visited[current] = 1;
                     if (current >= LINE_LENGTH && visited[current-LINE_LENGTH] == 0) {
                         toVisit.Push((ushort)(current-LINE_LENGTH));
                     }
@@ -36,6 +30,7 @@ namespace Aoc
                         toVisit.Push((ushort)(current-1));
                     }
                 }
+                visited[current] = 1;
             }
             return size;
         }
@@ -50,12 +45,14 @@ namespace Aoc
         private static int Solve(char[] input) {
             int top1, top2, top3, current;
             top1 = top2 = top3 = current = 0;
+            byte[] visited = new byte[N_LINES*LINE_LENGTH];
+            Stack<ushort> toVisit = new Stack<ushort>(128);
             ushort cursor = 0;
             ushort col = 1;
             while (cursor < LINE_LENGTH * N_LINES - 1) {
                 if (input[cursor] == '\n') {col = 0;}
                 else if (IsLowPoint(input, cursor, col)) {
-                    current = BassinSize(input, cursor, col);
+                    current = BassinSize(input, visited, toVisit, cursor);
                     if (current > top1) {top3 = top2; top2 = top1; top1 = current;}
                     else if (current > top2) {top3 = top2; top2 = current;}
                     else if (current > top3) {top3 = current;}
