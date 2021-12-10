@@ -27,7 +27,7 @@ fn run(input: [:0]u8) u32 {
     // Store input numbers, we'll deal with them once we've built the Grids
     var input_numbers = input_grid_splitter.next().?;
 
-    // Store grids 
+    // Store grids
     var grids = [_][25]u8{[_]u8{INVALID} ** 25} ** 100; // 100 in test input
 
     var grid_idx: u8 = 0; // 100 max
@@ -68,7 +68,7 @@ fn run(input: [:0]u8) u32 {
                                     if (grids[cur_grid_idx][cur_idx % BINGO_GRID_SIZE + 4 * BINGO_GRID_SIZE] == STRIKED)
                                         break :bingo_draw;
                     // check current line
-                    var line_start: u8 = cur_idx - cur_idx% BINGO_GRID_SIZE;
+                    var line_start: u8 = cur_idx - cur_idx % BINGO_GRID_SIZE;
                     // Can't unroll loop for some odd reason. Can do it manually though
                     if (grids[cur_grid_idx][line_start] == STRIKED)
                         if (grids[cur_grid_idx][line_start + 1] == STRIKED)
@@ -85,12 +85,12 @@ fn run(input: [:0]u8) u32 {
     var sum: u16 = 0;
 
     comptime var _i: u8 = 0;
-    inline while (_i < BINGO_GRID_SIZE * BINGO_GRID_SIZE) : (_i += 1){
-        if (grids[cur_grid_idx][_i] != STRIKED){
+    inline while (_i < BINGO_GRID_SIZE * BINGO_GRID_SIZE) : (_i += 1) {
+        if (grids[cur_grid_idx][_i] != STRIKED) {
             sum += grids[cur_grid_idx][_i];
         }
     }
-    
+
     return drawn * @as(u32, sum);
 }
 
