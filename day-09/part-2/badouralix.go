@@ -31,20 +31,31 @@ func run(s string) int {
 				continue
 			}
 
-			if j != 0 && coloring[i*(width+1)+(j-1)] != 0 {
+			if i != 0 && coloring[(i-1)*(width+1)+j] != 0 {
+				// Pick the color from the above location
+				coloring[i*(width+1)+j] = coloring[(i-1)*(width+1)+j]
+
+				if j != 0 && coloring[i*(width+1)+(j-1)] != 0 {
+					// Update aliases while ensuring a color always maps to a smaller color
+					// Updating the above and left locations is not enough as they can be recursively aliased
+					top := coloring[(i-1)*(width+1)+j]
+					for top != aliases[top] {
+						top = aliases[top]
+					}
+					left := coloring[i*(width+1)+(j-1)]
+					for left != aliases[left] {
+						left = aliases[left]
+					}
+
+					if top < left {
+						aliases[left] = top
+					} else {
+						aliases[top] = left
+					}
+				}
+			} else if j != 0 && coloring[i*(width+1)+(j-1)] != 0 {
 				// Pick the color from the left location
 				coloring[i*(width+1)+j] = coloring[i*(width+1)+(j-1)]
-
-				if i != 0 && coloring[(i-1)*(width+1)+j] != 0 {
-					// Update aliases while ensuring the tree structure of the aliases
-					// The color of the left location is guaranteed not to be aliased
-					// There is no guarantee on the color of the top location
-					// Given that this could override an existing alias, I have no idea why this works
-					aliases[coloring[(i-1)*(width+1)+j]] = coloring[i*(width+1)+j]
-				}
-			} else if j != 0 && i != 0 && coloring[(i-1)*(width+1)+j] != 0 {
-				// Pick the color from the top location
-				coloring[i*(width+1)+j] = coloring[(i-1)*(width+1)+j]
 			} else {
 				// Pick a new color
 				coloring[i*(width+1)+j] = current
@@ -60,7 +71,7 @@ func run(s string) int {
 		}
 	}
 
-	// Normalize aliases to ensure each color is aliased to the default basin color
+	// Normalize aliases to ensure each color is aliased to the smallest color possible
 	for color, alias := range aliases {
 		for alias != aliases[alias] {
 			alias = aliases[alias]
