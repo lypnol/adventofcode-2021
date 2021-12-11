@@ -46,15 +46,17 @@ def flash(board: List[List[int]], r: int, c: int) -> Set[Tuple[int, int]]:
     return res
 
 
-def reset(board: List[List[int]]) -> bool:
+def reset(board: List[List[int]]) -> Tuple[bool, int]:
     synced = True
+    delta = 10
     for r, row in enumerate(board):
         for c, v in enumerate(row):
             if v > 9:
                 board[r][c] = 0
             else:
                 synced = False
-    return synced
+                delta = min(delta, 10 - v)
+    return synced, delta
 
 
 class SkaschSubmission(SubmissionPy):
@@ -67,15 +69,19 @@ class SkaschSubmission(SubmissionPy):
         board = parse(s)
         nrows = len(board)
         ncols = len(board[0])
-        for idx in itertools.count(1):
+        delta = min(min(10 - v for v in row) for row in board)
+        idx = 0
+        while True:
+            idx += delta
             flashes = []
             for r, c in itertools.product(range(nrows), range(ncols)):
-                board[r][c] += 1
+                board[r][c] += delta
                 if board[r][c] > 9:
                     flashes.append((r, c))
             while flashes:
                 flashes.extend(flash(board, *flashes.pop()))
-            if reset(board):
+            synced, delta = reset(board)
+            if synced:
                 break
         return idx
 
