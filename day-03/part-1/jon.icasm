@@ -1,0 +1,116 @@
+
+
+in &countNumbers
+add &countNumbers 0 &numToRead
+
+# Loop on numbers
+readLoop:>
+
+in &n
+jmpz &n @endNumLoop
+numLoop:>
+
+add 10 0 &cmp
+add 0 0 &bitIdx
+add 1 0 &bitValue
+
+compCheck:>
+inf &n &cmp &compRes
+jmpnz compRes:0 @compOK
+
+mult &cmp 10 &cmp
+add &bitIdx 1 &bitIdx
+mult &bitValue 10 &bitValue
+jmpz 0 @compCheck
+
+compOK:>
+
+# Increment counts for this bit
+add @counts &bitIdx &countAddr
+add &countAddr 0 &countAddr2
+add 1 countAddr:&0 countAddr2:&0
+
+# Set maxBitIdx
+inf &maxBitIdx &bitIdx &maxBitIdxInf
+jmpz maxBitIdxInf:0 @noUpdateMaxBitIdx
+add &bitIdx 0 &maxBitIdx
+noUpdateMaxBitIdx:>
+
+# Remove bitValue and loop if n != 0
+mult -1 &bitValue &bitValue
+add &n &bitValue &n
+jmpnz &n @numLoop
+endNumLoop:>
+
+# End of readLoop
+add &numToRead -1 &numToRead
+jmpnz &numToRead @readLoop
+
+
+# Compute gamma and epsilon
+
+add 0 0 &bitIdx
+add 1 0 &bitValue
+
+computeLoop:>
+
+add @counts &bitIdx &numOnesAddr
+add numOnesAddr:&0 0 &numOnes
+mult &numOnes -1 &numZeros
+add &numZeros &countNumbers &numZeros
+
+inf &numZeros &numOnes &moreOnes
+jmpnz moreOnes:0 @updateGamma
+add &epsilon &bitValue &epsilon
+jmpz 0 @endOfChanges
+updateGamma:>
+add &gamma &bitValue &gamma
+endOfChanges:>
+
+mult &bitIdx -1 &bitIdxDiff
+add &bitIdxDiff &maxBitIdx &bitIdxDiff
+jmpz bitIdxDiff:0 @endCompute
+
+add &bitIdx 1 &bitIdx
+mult &bitValue 2 &bitValue
+
+jmpz 0 @computeLoop
+
+endCompute:>
+
+mult &gamma &epsilon &result
+out result:0
+stop
+
+
+# Variables
+
+countNumbers:0
+numToRead:0
+
+n:0
+
+cmp:0
+bitIdx:0
+bitValue:0
+
+maxBitIdx:0
+
+gamma:0
+epsilon:0
+
+numOnes:0
+numZeros:0
+
+counts:0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
