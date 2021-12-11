@@ -38,7 +38,7 @@ def neighbors(r: int, c: int, nrows: int, ncols: int) -> Iterable[Tuple[int, int
 def flash(board: List[List[int]], r: int, c: int) -> Set[Tuple[int, int]]:
     res = set()
     if board[r][c] < 9:
-        return
+        return res
     for nr, nc in neighbors(r, c, len(board), len(board[0])):
         if board[nr][nc] > 9:
             continue
