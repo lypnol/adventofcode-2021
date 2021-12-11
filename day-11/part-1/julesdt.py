@@ -21,7 +21,7 @@ class JulesdtSubmission(SubmissionPy):
                 for j in range(10):
                     data[i][j] += 1
             changes = True
-            flashed = []
+            flashed = set()
             # step 2
             while changes:
                 changes = False
@@ -29,7 +29,7 @@ class JulesdtSubmission(SubmissionPy):
                     for j in range(10):
                         if data[i][j] > 9 and (i, j) not in flashed:
                             flashes += 1
-                            flashed.append((i, j))
+                            flashed.add((i, j))
                             changes = True
                             for x in range(-1, 2):
                                 for y in range(-1, 2):
