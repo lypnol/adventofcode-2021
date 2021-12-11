@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"strings"
 	"sync"
 	"time"
 )
@@ -14,28 +13,39 @@ const WG_SIZE = 10
 var POINTS = map[byte]int{')': 3, ']': 57, '}': 1197, '>': 25137}
 var CLOSING = map[byte]byte{'(': ')', '[': ']', '{': '}', '<': '>'}
 
-func parse(s string, c chan<- string) {
-	for _, row := range strings.Split(s, "\n") {
-		c <- row
+type Bounds struct {
+	left, right int
+}
+
+func parse(s string, c chan<- Bounds) {
+	left := 0
+	for right := 0; right < len(s); right++ {
+		if s[right] == '\n' {
+			c <- Bounds{left, right}
+			left = right + 1
+		}
 	}
+	c <- Bounds{left, len(s)}
 	close(c)
 }
 
-func process(c <-chan string, res chan<- int) {
+func process(s string, c <-chan Bounds, res chan<- int) {
 	stack := make([]byte, 30)
-	for row := range c {
-		stack = nil
-		for cursor := 0; cursor < len(row); cursor++ {
-			b := row[cursor]
-			_, ok := CLOSING[b]
-			if ok {
-				stack = append(stack, b)
-			} else {
-				l := stack[len(stack)-1]
-				stack = stack[:len(stack)-1]
+	for bounds := range c {
+		idx := 0
+		for cursor := bounds.left; cursor < bounds.right; cursor++ {
+			b := s[cursor]
+			switch b {
+			case '(', '[', '{', '<':
+				idx++
+				stack[idx] = b
+			default:
+				l := stack[idx]
+				idx--
 				exp_r := CLOSING[l]
 				if b != exp_r {
 					res <- POINTS[b]
+					break
 				}
 			}
 		}
@@ -45,29 +55,29 @@ func process(c <-chan string, res chan<- int) {
 func run(s string) int {
 	// Your code goes here
 	// fmt.Printf("%v", parse(s))
-	c := make(chan string)
+	c := make(chan Bounds)
 	go parse(s, c)
 
 	var wg sync.WaitGroup
 
-	resc := make(chan int)
+	res_chan := make(chan int)
 
 	for i := 0; i < WG_SIZE; i++ {
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
-			process(c, resc)
+			process(s, c, res_chan)
 		}()
 	}
 
 	go func() {
 		wg.Wait()
-		close(resc)
+		close(res_chan)
 	}()
 
 	res := 0
-	for v := range resc {
+	for v := range res_chan {
 		res += v
 	}
 
