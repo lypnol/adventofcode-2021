@@ -1,0 +1,32 @@
+in &count
+
+in &previous3
+in &previous2
+in &previous1
+add &count -3 &count
+
+loop:>
+in &current
+add &count -1 &count
+
+inf &previous3 &current &isGreater
+add &result isGreater:0 &result
+
+add &previous2 0 &previous3
+add &previous1 0 &previous2
+add &current 0 &previous1
+
+jmpnz &count @loop
+
+out result:0
+stop
+
+
+
+# Variables
+
+count:0
+previous3:0
+previous2:0
+previous1:0
+current:0

@@ -1,0 +1,25 @@
+in &count
+
+in &previous
+add &count -1 &count
+
+loop:>
+in &current
+add &count -1 &count
+
+inf &previous &current &isGreater
+add &result isGreater:0 &result
+
+add &current 0 &previous
+jmpnz &count @loop
+
+out result:0
+stop
+
+
+
+# Variables
+
+count:0
+previous:0
+current:0

@@ -1,0 +1,282 @@
+
+in &n
+mult &n -1 &minusN
+
+
+# Read numbers from input
+rel @numbers
+inLoop:>
+in inIdx:~0 #numInAddr:&0
+add &inIdx 1 &inIdx
+# Loop if (n - inIdx) != 0
+mult &inIdx -1 &numInLeft
+add &numInLeft &n &numInLeft
+jmpnz numInLeft:0 @inLoop
+
+
+
+# Compute the number of bits
+compNumLoop:>
+add @numbers &i &compNumAddr
+
+compLoop:>
+inf compNumAddr:&0 &comp &isInf
+jmpnz isInf:0 @compOK
+
+add &numBits 1 &numBits
+mult &comp 10 &comp
+jmpz 0 @compLoop
+compOK:>
+
+add &i 1 &i
+# Loop until i == n
+mult &i -1 &compNumLeft
+add &compNumLeft &n &compNumLeft
+jmpnz compNumLeft:0 @compNumLoop
+
+mult &numBits -1 &minusNumBits
+
+
+
+# Compute powers of 10 and powers of 2
+add @numbers &n &pow10Base
+add &pow10Base &numBits &pow2Base
+add &numBits -1 &i
+add 1 0 &tmp
+add 1 0 &tmp2
+
+powLoop:>
+add &pow10Base &i &pow10WriteAddr
+add &tmp 0 pow10WriteAddr:&0
+add &pow2Base &i &pow2WriteAddr
+add &tmp2 0 pow2WriteAddr:&0
+
+add &i -1 &i
+mult &tmp 10 &tmp
+mult &tmp2 2 &tmp2
+
+# Loop while i >= 0
+add &i 1 &powLeft
+jmpnz powLeft:0 @powLoop
+
+
+
+# Parse numbers to binary
+add &pow2Base &numBits &binArrayBase
+mult &n &numBits &binArraySize
+
+add 0 0 &i
+parseNumLoop:>
+
+add @numbers &i &parseNumAddr
+
+add 0 0 &j
+parseDigitLoop:>
+
+add &pow10Base &j &parsePowAddr
+inf parseNumAddr:&0 parsePowAddr:&0 &parseIsInf
+jmpnz parseIsInf:0 @parseDigitDone
+
+# Remove power from number
+add &parsePowAddr 0 &parsePowAddr2
+add &parseNumAddr 0 &parseNumAddr2
+add &parseNumAddr 0 &parseNumAddr3
+mult parsePowAddr2:&0 -1 &minusDigitPow
+add minusDigitPow:0 parseNumAddr2:&0 parseNumAddr3:&0
+
+parseDigitDone:>
+
+# Write bit
+mult &parseIsInf -1 &minusIsInf
+mult &i &numBits &parseWriteAddr
+add &parseWriteAddr &binArrayBase &parseWriteAddr
+add &parseWriteAddr &j &parseWriteAddr
+add 1 minusIsInf:0 parseWriteAddr:&0
+
+add &j 1 &j
+# Loop while j < numBits
+add &j &minusNumBits &parseDigitLeft
+jmpnz parseDigitLeft:0 @parseDigitLoop
+
+add &i 1 &i
+# Loop while i < n
+mult &i -1 &parseNumLeft
+add &parseNumLeft &n &parseNumLeft
+jmpnz parseNumLeft:0 @parseNumLoop
+
+
+
+# Call function to find rating twice
+add &binArrayBase &binArraySize &bitmapBase
+
+add 1 0 &findRatingSelect
+add @firstRatingReturn 0 &findRatingReturnAddr
+jmpz 0 @execFindRating
+firstRatingReturn:>
+add &findRatingRes 0 &firstRating
+
+add 0 0 &findRatingSelect
+add @secondRatingReturn 0 &findRatingReturnAddr
+jmpz 0 @execFindRating
+secondRatingReturn:>
+add &findRatingRes 0 &secondRating
+
+mult firstRating:0 secondRating:0 &result
+out result:0
+stop
+
+
+
+#################################
+###   Function: Find rating   ###
+#################################
+
+# Inputs
+findRatingSelect:0  # Number to select when there are more ones (0 or 1)
+findRatingReturnAddr:0
+
+# Output
+findRatingRes:0
+
+# Variables
+numOnes:0
+numZeros:0
+selectNum:0
+numSelected:0
+ratingIdx:0
+
+
+
+execFindRating:>
+
+add &n 0 &i
+bitmapInitLoop:>
+add &i -1 &i
+add &bitmapBase &i &bitmapInitAddr
+add 1 0 bitmapInitAddr:&0
+jmpnz &i @bitmapInitLoop
+
+
+# Loop on digits
+add 0 0 &i
+mainDigitLoop:>
+
+# Count number of ones and zeros under bitmap
+add 0 0 &numOnes
+add 0 0 &numZeros
+add &n 0 &j
+mainCountOnesLoop:>
+add &j -1 &j
+
+add &bitmapBase &j &countOnesBitmapAddr
+jmpz countOnesBitmapAddr:&0 @mainCountOnesDone
+
+mult &j &numBits &countOnesDigitAddr
+add &countOnesDigitAddr &i &countOnesDigitAddr
+add &countOnesDigitAddr &binArrayBase &countOnesDigitAddr
+jmpz countOnesDigitAddr:&0 @mainCountOnesIsZero
+add &numOnes 1 &numOnes
+jmpz 0 @mainCountOnesDone
+mainCountOnesIsZero:>
+add &numZeros 1 &numZeros
+mainCountOnesDone:>
+
+jmpnz &j @mainCountOnesLoop
+
+
+mult &findRatingSelect -1 &selectNum
+inf &numOnes &numZeros &mainMoreZeros
+jmpz mainMoreZeros:0 @mainSelectEnd
+mult &selectNum -1 &selectNum
+add &selectNum -1 &selectNum
+mainSelectEnd:>
+
+
+# Loop again on numbers to update bitmap
+add 0 0 &numSelected
+add &n 0 &j
+mainExcludeLoop:>
+add &j -1 &j
+
+add &bitmapBase &j &excludeBitmapAddr
+jmpz excludeBitmapAddr:&0 @mainExcludeDone
+
+mult &j &numBits &excludeDigitAddr
+add &excludeDigitAddr &i &excludeDigitAddr
+add &excludeDigitAddr &binArrayBase &excludeDigitAddr
+add excludeDigitAddr:&0 &selectNum &selectedDiff
+
+jmpnz selectedDiff:0 @notSelected
+add &numSelected 1 &numSelected
+add &j 0 &ratingIdx
+jmpz 0 @mainExcludeDone
+notSelected:>
+
+add &excludeBitmapAddr 0 &excludeBitmapAddr2
+add 0 0 excludeBitmapAddr2:&0
+
+mainExcludeDone:>
+
+jmpnz &j @mainExcludeLoop
+
+# End loop if exactly one selected
+add &numSelected -1 &numSelectedMinus1
+jmpz numSelectedMinus1:0 @endOfSelection
+
+add &i 1 &i
+add &i &minusNumBits &mainDigitLeft
+jmpnz mainDigitLeft:0 @mainDigitLoop
+
+endOfSelection:>
+
+
+
+# Convert number bits to value
+add 0 0 &findRatingRes
+
+mult &ratingIdx &numBits &convertDigitAddr
+add &convertDigitAddr &binArrayBase &convertDigitAddr
+add &pow2Base 0 &convertBitValueAddr
+
+add &numBits 0 &i
+convertLoop:>
+add &i -1 &i
+
+mult convertDigitAddr:&0 convertBitValueAddr:&0 &convertBitValue
+add &findRatingRes convertBitValue:0 &findRatingRes
+
+add &convertDigitAddr 1 &convertDigitAddr
+add &convertBitValueAddr 1 &convertBitValueAddr
+
+jmpnz &i @convertLoop
+
+jmpz 0 &findRatingReturnAddr
+
+
+
+#####################
+###   Variables   ###
+#####################
+
+n:0
+minusN:0
+
+numBits:1
+minusNumBits:0
+comp:10
+i:0
+j:0
+tmp:0
+tmp2:0
+
+
+
+pow10Base:0
+pow2Base:0
+binArrayBase:0
+binArraySize:0
+bitmapBase:0
+
+numbers:0
+
+
