@@ -127,37 +127,26 @@ impl CaveGraph {
         mut visited: BitSet,
         chosen_small: Option<usize>,
     ) -> usize {
-        if current_id == 1 {
-            if let Some(id) = chosen_small {
-                if visited.test(id) {
-                    return 1;
-                } else {
-                    // if we elected to visit a vace twice, we must actually visit it twice
-                    return 0;
-                }
-            } else {
-                return 1;
-            }
-        }
         let mut count = 0;
         let current_cave = &self.caves[current_id];
         if current_id != 0 && current_cave.is_small() {
             if chosen_small.is_none() {
-                let mut visited2 = visited;
-                visited2.set(current_id);
                 for c in current_cave.connections() {
-                    if !visited.test(c) {
+                    if c != 1 && !visited.test(c) {
+                        // Try to visit the current cave twice
                         count += self.search_aux(c, visited, Some(current_id));
-                        count += self.search_aux(c, visited2, None);
                     }
                 }
-                return count;
-            } else {
-                visited.set(current_id);
             }
+            visited.set(current_id);
         }
         for c in current_cave.connections() {
-            if !visited.test(c) {
+            if c == 1 {
+                if chosen_small.is_none() || visited.test(chosen_small.unwrap()) {
+                    // if we elected to visit a cave twice, we must actually visit it twice
+                    count += 1;
+                }
+            } else if !visited.test(c) {
                 count += self.search_aux(c, visited, chosen_small);
             }
         }
