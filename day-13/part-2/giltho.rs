@@ -9,8 +9,8 @@ fn main() {
     let output = run(&input);
     let elapsed = now.elapsed();
     println!("_duration:{}", elapsed.as_secs_f64() * 1000.);
-    println!("_letters:8");
-    println!("{}", output);
+    println!("_parse");
+    print!("{}", output);
 }
 
 enum Instruction {
