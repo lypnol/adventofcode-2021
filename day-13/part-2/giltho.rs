@@ -9,6 +9,7 @@ fn main() {
     let output = run(&input);
     let elapsed = now.elapsed();
     println!("_duration:{}", elapsed.as_secs_f64() * 1000.);
+    println!("_letters:8");
     println!("{}", output);
 }
 
@@ -24,11 +25,8 @@ struct Origami {
 
 impl Display for Origami {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let (max_x, max_y) = self.paper.iter().fold((0, 0), |(i, j), (k, l)| {
-            (std::cmp::max(i, *k), std::cmp::max(j, *l))
-        });
-        for i in 0..=max_y {
-            for j in 0..=max_x {
+        for i in 0..6 {
+            for j in 0..40 {
                 if self.paper.contains(&(j, i)) {
                     write!(f, "#")?
                 } else {
@@ -101,59 +99,10 @@ impl Origami {
     fn fold_all(&mut self) {
         while self.fold_once() {}
     }
-
-    fn hash(&self) -> u64 {
-        let (max_x, max_y) = self.paper.iter().fold((0, 0), |(i, j), (k, l)| {
-            (std::cmp::max(i, *k), std::cmp::max(j, *l))
-        });
-        let mut curr_res: u64 = 0;
-        for i in 0..=max_y {
-            let mut curr_acc: u64 = 0;
-            for j in 0..=max_x {
-                if self.paper.contains(&(j, i)) {
-                    curr_acc |= 1 << (max_x - j)
-                }
-            }
-            curr_res ^= curr_acc;
-        }
-        curr_res
-    }
 }
 
-fn run(input: &str) -> u64 {
+fn run(input: &str) -> String {
     let mut origami = Origami::from_str(input);
     origami.fold_all();
-    origami.hash()
-}
-
-mod tests {
-    use super::*;
-
-    #[test]
-    fn run_test() {
-        assert_eq!(
-            run("6,10
-0,14
-9,10
-0,3
-10,4
-4,11
-6,0
-6,12
-4,1
-0,13
-10,12
-3,4
-3,0
-8,4
-1,10
-2,14
-8,10
-9,0
-
-fold along y=7
-fold along x=5"),
-            17
-        )
-    }
+    format!("{}", origami)
 }
