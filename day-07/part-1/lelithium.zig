@@ -5,7 +5,7 @@ const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
 const INPUT_SIZE: u16 = 1000;
 
-fn median(l: [INPUT_SIZE]u16, k: u16, input_len: u16) u16{
+fn median(l: [INPUT_SIZE]u16, k: u16, input_len: u16) u16 {
     // for (l)|elt|{
     //     std.debug.print("{},", .{elt});
     // }
@@ -15,49 +15,44 @@ fn median(l: [INPUT_SIZE]u16, k: u16, input_len: u16) u16{
     const pivot: u16 = l[k];
     //std.debug.print("Using pivot [{}]{}\n",.{k/3, pivot});
 
-
-    var lows = [_]u16{0}**INPUT_SIZE;
-    var highs = [_]u16{0}**INPUT_SIZE;
+    var lows = [_]u16{0} ** INPUT_SIZE;
+    var highs = [_]u16{0} ** INPUT_SIZE;
 
     var low_count: u16 = 0;
     var high_count: u16 = 0;
     var pivot_count: u16 = 0;
 
     var idx: u16 = 0;
-    while (idx < input_len) : (idx += 1){
+    while (idx < input_len) : (idx += 1) {
         //std.debug.print("Working on value {}\n", .{l[idx]});
-        if (l[idx] < pivot){
+        if (l[idx] < pivot) {
             //std.debug.print("\tAdding to lows\n", .{});
             lows[low_count] = l[idx];
             low_count += 1;
-        }
-        else if (l[idx] > pivot){
+        } else if (l[idx] > pivot) {
             //std.debug.print("\tAdding to highs\n", .{});
             highs[high_count] = l[idx];
             high_count += 1;
-        }
-        else{
+        } else {
             //std.debug.print("\tAdding to pivots\n", .{});
             pivot_count += 1;
         }
     }
-    if (k < low_count){
+    if (k < low_count) {
         return median(lows, k, low_count);
-    }
-    else if (k < low_count + pivot_count) {
+    } else if (k < low_count + pivot_count) {
         return pivot;
-    }
-    else{
+    } else {
         return median(highs, k - low_count - 1, high_count);
     }
-} 
+}
 
 fn run(input: [:0]u8) u32 {
     var crabs = [_]u16{0} ** INPUT_SIZE;
     var last_crab_idx: u16 = 0;
     var crabos_it = std.mem.tokenize(input, ",\n");
 
-    while (crabos_it.next()) |crabos| : (last_crab_idx += 1){
+    while (crabos_it.next()) |crabos| : (last_crab_idx += 1) {
         var crabval: u16 = std.fmt.parseInt(u16, crabos, 10) catch unreachable;
         crabs[last_crab_idx] = crabval;
     }
@@ -65,14 +60,13 @@ fn run(input: [:0]u8) u32 {
     const crab_median = median(crabs, INPUT_SIZE / 2, INPUT_SIZE);
 
     std.debug.print("crab median {}\n", .{crab_median});
-    
+
     var fuel: u32 = 0;
 
-    for (crabs)|crab|{
-        if (crab > crab_median){
+    for (crabs) |crab| {
+        if (crab > crab_median) {
             fuel += crab - crab_median;
-        }
-        else{
+        } else {
             fuel += crab_median - crab;
         }
     }
