@@ -25,7 +25,7 @@ class SilvestreSubmission(SubmissionPy):
                     counter+=1
                 else:
                     small_cave = next.upper() != next
-                    if not ((small_cave and next in previous) and twice_previous):
+                    if not small_cave or next not in previous or (not twice_previous):
                         unfinished_paths.append((next, previous | {next,}, twice_previous or (small_cave and next in previous)))
         return counter
 
