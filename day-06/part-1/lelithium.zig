@@ -3,8 +3,6 @@ const std = @import("std");
 var a: *std.mem.Allocator = undefined;
 const stdout = std.io.getStdOut().writer(); //prepare stdout to write in
 
-const GRID_SIZE: u16 = 1000;
-
 fn run(input: [:0]u8) u32 {
     var count: u32 = 0;
 
