@@ -25,6 +25,16 @@ fn fold_y(points: &mut Vec<(u16, u16)>, y0: u16) {
     }
 }
 
+fn count_dedup(points: &[(u16, u16)]) -> usize {
+    let mut count = 1;
+    for (i, &p) in points.iter().enumerate().skip(1) {
+        if points[i-1] != p {
+            count += 1;
+        }
+    }
+    count
+}
+
 fn run(input: &str) -> usize {
     // Your code goes here
     let (points, folds) = input.split_once("\n\n").unwrap();
@@ -41,8 +51,7 @@ fn run(input: &str) -> usize {
         fold_y(&mut paper, n);
     };
     paper.sort_unstable();
-    paper.dedup();
-    paper.len()
+    count_dedup(&paper)
 }
 
 #[cfg(test)]
