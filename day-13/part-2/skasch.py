@@ -44,7 +44,7 @@ def folds_to_op(folds: Iterable[Tuple[bool, int]]) -> Callable[[Tuple[int, int]]
 
 
 class SkaschSubmission(SubmissionPy):
-    def run(self, s: str) -> int:
+    def run(self, s: str) -> str:
         """
         :param s: input in string format
         :return: solution flag
@@ -53,16 +53,12 @@ class SkaschSubmission(SubmissionPy):
         points, folds = parse(s)
         op = folds_to_op(folds)
         pts = {op(point) for point in points}
-        res = 0
-        ny = min(pos for x_axis, pos in folds if not x_axis)
-        nx = min(pos for x_axis, pos in folds if x_axis)
-        for r in range(ny):
-            v = 0
-            for c in range(nx):
-                if (r, c) in pts:
-                    v += 1 << (nx - c - 1)
-            res ^= v
-        return res
+        res = []
+        for r in range(min(pos for x_axis, pos in folds if not x_axis)):
+            res.append(
+                "".join("#" if (r, c) in pts else "." for c in range(min(pos for x_axis, pos in folds if x_axis)))
+            )
+        return "\n".join(res)
 
 
 def test_skasch() -> None:
@@ -95,5 +91,12 @@ fold along y=7
 fold along x=5
 """.strip()
         )
-        == 17
+        == """\
+#####
+#...#
+#...#
+#...#
+#####
+.....
+....."""
     )
