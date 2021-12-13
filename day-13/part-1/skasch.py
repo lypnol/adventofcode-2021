@@ -42,8 +42,6 @@ class SkaschSubmission(SubmissionPy):
         points, folds = parse(s)
         op = fold_to_op(folds[0])
         pts = {op(point) for point in points}
-        # for r in range(min(pos for x_axis, pos in folds if not x_axis)):
-        #     print("".join("#" if (r, c) in pts else "." for c in range(min(pos for x_axis, pos in folds if x_axis))))
         return len(pts)
 
 
