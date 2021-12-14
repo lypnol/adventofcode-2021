@@ -19,7 +19,7 @@ class ThomrenSubmission(SubmissionPy):
 
 
 def count_paths(graph, start, target):
-    @lru_cache
+    @lru_cache(None)
     def backtrack(node, visited, twice_small_cave=False):
         if node == target:
             return (True, 1)
