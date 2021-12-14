@@ -49,7 +49,7 @@ class SkaschSubmission(SubmissionPy):
         return self.dfs(START, self.bits[START])
 
 
-def test_skasch():
+def test_skasch() -> None:
     """
     Run `python -m pytest ./day-12/part-1/skasch.py` to test the submission.
     """
