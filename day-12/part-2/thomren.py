@@ -1,7 +1,11 @@
 from typing import Dict, List
 from collections import defaultdict
+from functools import lru_cache
 
 from tool.runners.python import SubmissionPy
+
+START = "start"
+END = "end"
 
 
 class ThomrenSubmission(SubmissionPy):
@@ -11,30 +15,34 @@ class ThomrenSubmission(SubmissionPy):
         :return: solution flag
         """
         graph = parse_graph(s)
-        return backtrack("start", graph, frozenset(["start"]))[1]
+        return count_paths(graph, START, END)
 
 
-def backtrack(node, graph, visited, twice_lower_used=False):
-    if node == "end":
-        return (True, 1)
+def count_paths(graph, start, target):
+    @lru_cache
+    def backtrack(node, visited, twice_small_cave=False):
+        if node == target:
+            return (True, 1)
+        visited = visited | frozenset([node])
 
-    res = (False, 0)
-    for neighbor in graph[node]:
-        if (
-            (twice_lower_used or neighbor in ["start", "end"])
-            and neighbor.islower()
-            and neighbor in visited
-        ):
-            continue
-        found, n_paths = backtrack(
-            neighbor,
-            graph,
-            visited | frozenset([neighbor]),
-            twice_lower_used or (neighbor in visited and neighbor.islower()),
-        )
-        res = (res[0] | found, res[1] + n_paths)
+        res = (False, 0)
+        for neighbor in graph[node]:
+            if (
+                (twice_small_cave or neighbor == start)
+                and neighbor.islower()
+                and neighbor in visited
+            ):
+                continue
+            found, n_paths = backtrack(
+                neighbor,
+                visited,
+                twice_small_cave or (neighbor in visited and neighbor.islower()),
+            )
+            res = (res[0] | found, res[1] + n_paths)
 
-    return res
+        return res
+
+    return backtrack(start, frozenset())[1]
 
 
 def parse_graph(s: str) -> Dict[str, List[str]]:
