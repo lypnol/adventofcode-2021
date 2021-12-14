@@ -51,7 +51,8 @@ impl Polymer {
         for r in rules.lines() {
             rules_ids.push(self.get_ids_from_rule(r.as_bytes()));
         }
-        self.rules.resize(rules_ids.len(), 0);
+        self.rules
+            .resize(self.id2name.len() * self.id2name.len(), 0);
         for (id1, id2, id3) in rules_ids {
             self.rules[id1 as usize * self.id2name.len() + id2 as usize] = id3;
         }
@@ -100,6 +101,18 @@ impl Polymer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_less_rules() {
+        let input = "AB
+
+AB -> C
+AC -> C
+CB -> C
+CC -> C
+";
+        assert_eq!(run(input), (1 << 10) - 2)
+    }
 
     #[test]
     fn run_test() {
