@@ -28,7 +28,7 @@ fn fold_y(points: &mut Vec<(u16, u16)>, y0: u16) {
 fn count_dedup(points: &[(u16, u16)]) -> usize {
     let mut count = 1;
     for (i, &p) in points.iter().enumerate().skip(1) {
-        if points[i-1] != p {
+        if points[i - 1] != p {
             count += 1;
         }
     }
