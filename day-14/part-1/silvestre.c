@@ -34,8 +34,10 @@ void apply_step(char (*current)[MAX_POLYMER_SIZE], ushort *current_size, char (*
     ushort next_idx = 0;
     for (ushort current_idx = 0; current_idx < *current_size; current_idx++) {
         pair = ((pair << 5) & RESET_MASK) | (*current)[current_idx];
-        (*next)[next_idx] = mapping[pair];
-        next_idx += (mapping[pair] != 0);
+        if (mapping[pair]) {
+            (*next)[next_idx] = mapping[pair];
+            next_idx++;
+        }
         (*next)[next_idx] = (*current)[current_idx]; 
         next_idx++;
     }

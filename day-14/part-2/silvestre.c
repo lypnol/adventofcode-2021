@@ -30,16 +30,19 @@ void swap_ptr(void **ptr1, void **ptr2) {
     void *tmp = *ptr1; *ptr1 = *ptr2; *ptr2 = tmp;
 }
 
-void apply_step(ullong (*current)[MAPPING_SIZE], ullong (*next)[MAPPING_SIZE], ushort mapping[MAPPING_SIZE]) {
-    for (ushort pair = 0; pair < MAPPING_SIZE; pair++) {
+void apply_step(ullong (*current)[MAPPING_SIZE], ullong (*next)[MAPPING_SIZE], ushort mapping[MAPPING_SIZE], ushort index[MAPPING_SIZE], ushort index_size) {
+    ushort pair = 0;
+    for (ushort i = 0; i<index_size; i++) {
+        pair = index[i];
         (*next)[((pair & FIRST_LETTER_MASK) | mapping[pair])] += (*current)[pair];
         (*next)[((pair & SECOND_LETTER_MASK) | (mapping[pair] << 5))] += (*current)[pair];
     }
 }
 
-void parse_input(char *s, ushort mapping[MAPPING_SIZE], ullong (*current)[MAPPING_SIZE]) {
+void parse_input(char *s, ushort mapping[MAPPING_SIZE], ushort index[MAPPING_SIZE], ushort *index_size, ullong (*current)[MAPPING_SIZE]) {
     ushort state = 0;
     ushort pair = 0;
+    *index_size = 0;
     while (*s) {
         if (state == 0) {
             switch (*s) {
@@ -74,6 +77,8 @@ void parse_input(char *s, ushort mapping[MAPPING_SIZE], ullong (*current)[MAPPIN
                             break;
                         case 2:
                             mapping[pair] = (*s - 'A' + 1);
+                            index[*index_size] = pair;
+                            (*index_size)++;
                             break;
                     }
                     s++;
@@ -86,6 +91,8 @@ void parse_input(char *s, ushort mapping[MAPPING_SIZE], ullong (*current)[MAPPIN
 ullong run(char* s) {
     // variables
     ushort mapping[MAPPING_SIZE];
+    ushort index[MAPPING_SIZE];
+    ushort index_size = 0;
     ullong array1[MAPPING_SIZE], array2[MAPPING_SIZE];
     ullong (*current)[MAPPING_SIZE] = &array1;
     ullong (*next)[MAPPING_SIZE] = &array2;
@@ -94,14 +101,16 @@ ullong run(char* s) {
     reset_array(&mapping, MAPPING_SIZE);
     reset_array(current, MAPPING_SIZE);
     reset_array(next, MAPPING_SIZE);
-    parse_input(s, mapping, current);
+    parse_input(s, mapping, index, &index_size, current);
     init_counter(counter, s);
     for (ushort step = 0; step < N_STEPS; step++) {
-        apply_step(current, next, mapping);
+        apply_step(current, next, mapping, index, index_size);
         swap_ptr((void**) &current, (void**) &next);
         reset_array(next, MAPPING_SIZE);
     }
-    for (ushort pair = 0; pair < MAPPING_SIZE; pair++) {
+    ushort pair = 0;
+    for (ushort i = 0; i<index_size; i++) {
+        pair = index[i];
         counter[(pair & SECOND_LETTER_MASK)] += (*current)[pair];
         counter[(pair >> 5)] += (*current)[pair];
     }
