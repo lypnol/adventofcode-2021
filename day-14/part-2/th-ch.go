@@ -48,6 +48,10 @@ func run(s string) interface{} {
 	}
 
 	characters := map[byte]int{polymer[0]: 1, polymer[len(polymer)-1]: 1}
+	if polymer[0] == polymer[len(polymer)-1] {
+		characters = map[byte]int{polymer[0]: 2}
+	}
+
 	polymerLength := 1 // account for last char
 	for pair, nb := range currentPairs {
 		if _, ok := characters[pair[0]]; !ok {
