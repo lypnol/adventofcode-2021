@@ -1,5 +1,6 @@
 from collections import Counter
-from typing import Dict
+from functools import lru_cache
+from typing import Dict, Counter as CounterType
 
 from tool.runners.python import SubmissionPy
 
@@ -14,37 +15,37 @@ class ThomrenSubmission(SubmissionPy):
         """
         polymer, rules_str = s.split("\n\n")
 
-        self.rules = {}
+        rules = {}
         for line in rules_str.splitlines():
             fr, to = line.split(" -> ")
-            self.rules[fr] = to
+            rules[fr] = to
 
-        self.memo = {}
-        counts = Counter(list(polymer))
-        for i in range(len(polymer) - 1):
-            counts += self.grow(polymer[i : i + 2], n_steps)
+        counts = count_polymers(polymer, rules, n_steps)
+
         mc = counts.most_common()
         return int(mc[0][1]) - int(mc[-1][1])
 
+
+def count_polymers(start: str, rules: Dict[str, str], n_steps: int) -> CounterType[str]:
+    @lru_cache(None)
     def grow(
-        self,
         polymer: str,
         n: int,
-    ):
-        if (polymer, n) in self.memo:
-            return self.memo[(polymer, n)]
-
-        new = self.rules.get(polymer)
+    ) -> CounterType[str]:
+        new = rules.get(polymer)
         if new is None or n == 0:
             return Counter()
 
-        res = (
-            self.grow(polymer[0] + new, n - 1)
-            + self.grow(new + polymer[1], n - 1)
+        return (
+            grow(polymer[0] + new, n - 1)
+            + grow(new + polymer[1], n - 1)
             + Counter([new])
         )
-        self.memo[(polymer, n)] = res
-        return res
+
+    return sum(
+        (grow(start[i : i + 2], n_steps) for i in range(len(start) - 1)),
+        Counter(list(start)),
+    )
 
 
 def test_thomren():
