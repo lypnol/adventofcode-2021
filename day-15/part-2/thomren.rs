@@ -1,5 +1,5 @@
 use std::cmp::Reverse;
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::collections::BinaryHeap;
 use std::env::args;
 use std::num::ParseIntError;
 use std::str::FromStr;
@@ -16,6 +16,7 @@ fn main() {
 fn run(input: &str) -> usize {
     let cave = Cave::from_str(input).unwrap();
     cave.shortest_path_length((0, 0), (cave.height() - 1, cave.width() - 1))
+        .unwrap()
 }
 
 const TILING_FACTOR: usize = 5;
@@ -39,16 +40,21 @@ impl FromStr for Cave {
 }
 
 impl Cave {
-    fn neighbors(&self, i: usize, j: usize) -> Vec<(usize, usize)> {
-        let (i, j) = (i as isize, j as isize);
-        return [(i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)]
-            .iter()
-            .cloned()
-            .filter(|(x, y)| {
-                *x >= 0 && *y >= 0 && (*x as usize) < self.height() && (*y as usize) < self.width()
-            })
-            .map(|(x, y)| (x as usize, y as usize))
-            .collect::<Vec<(usize, usize)>>();
+    fn neighbors(&self, i: usize, j: usize) -> impl Iterator<Item = (usize, usize)> + '_ {
+        [
+            (i as isize - 1, j as isize),
+            (i as isize + 1, j as isize),
+            (i as isize, j as isize - 1),
+            (i as isize, j as isize + 1),
+        ]
+        .into_iter()
+        .filter_map(move |(x, y)| {
+            if x >= 0 && y >= 0 && (x as usize) < self.height() && (y as usize) < self.width() {
+                Some((x as usize, y as usize))
+            } else {
+                None
+            }
+        })
     }
 
     fn value(&self, i: usize, j: usize) -> u8 {
@@ -70,34 +76,37 @@ impl Cave {
         self.0[0].len() * TILING_FACTOR
     }
 
-    fn shortest_path_length(&self, start: (usize, usize), end: (usize, usize)) -> usize {
+    fn shortest_path_length(&self, start: (usize, usize), end: (usize, usize)) -> Option<usize> {
+        // Shortest Path Length using A* with the Manhattan distance as heuristic
+        let (height, width) = (self.height(), self.width());
         let mut heap = BinaryHeap::new();
-        let mut visited = HashSet::new();
-        let mut best_by_node = HashMap::new();
+        let mut visited = vec![false; height * width];
+        let mut best_low_bound_by_node = vec![usize::MAX; height * width];
 
         heap.push((Reverse(manhattan_distance(start, end)), start, 0));
         while let Some((_, node, dist)) = heap.pop() {
             if node == end {
-                return dist;
+                return Some(dist);
             }
-
-            if visited.contains(&node) {
-                continue;
-            }
-            visited.insert(node);
 
             let (i, j) = node;
+            if visited[i * width + j] {
+                continue;
+            }
+            visited[i * width + j] = true;
+
             for neighbor in self.neighbors(i, j) {
-                let neighbor_dist = dist + self.value(neighbor.0, neighbor.1) as usize;
-                let neighbor_h = neighbor_dist + manhattan_distance(neighbor, end);
-                let h = best_by_node.get(&neighbor);
-                if h.is_none() || neighbor_h < *h.unwrap() {
-                    heap.push((Reverse(neighbor_h), neighbor, neighbor_dist));
-                    best_by_node.insert(neighbor, neighbor_h);
+                let (ni, nj) = neighbor;
+                let neighbor_dist = dist + self.value(ni, nj) as usize;
+                let low_bound = neighbor_dist + manhattan_distance(neighbor, end);
+                let cur_low_bound = best_low_bound_by_node[ni * width + nj];
+                if low_bound < cur_low_bound {
+                    heap.push((Reverse(low_bound), neighbor, neighbor_dist));
+                    best_low_bound_by_node[ni * width + nj] = low_bound;
                 }
             }
         }
-        0
+        None
     }
 }
 
