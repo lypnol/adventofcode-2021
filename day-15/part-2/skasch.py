@@ -49,23 +49,33 @@ class SkaschSubmission(SubmissionPy):
         minrisk_start[0][0] = board[0][0]
         minrisk_end = [[float("inf")] * self.ncols for _ in range(self.nrows)]
         minrisk_end[-1][-1] = end_risk
-        q = [(start_risk + end_risk, start_risk, end_risk, (0, 0), (self.nrows - 1, self.ncols - 1))]
+        q = [
+            (
+                start_risk + end_risk,
+                start_risk,
+                end_risk,
+                0,
+                0,
+                self.nrows - 1,
+                self.ncols - 1,
+            )
+        ]
         while q:
-            risk, risk1, risk2, pos1, pos2 = heapq.heappop(q)
-            if sum(abs(p1 - p2) for p1, p2 in zip(pos1, pos2)) == 1:
+            risk, risk1, risk2, r1, c1, r2, c2 = heapq.heappop(q)
+            if abs(r1 - r2) + abs(c1 - c2) == 1:
                 return risk
-            for nr, nc in self.neighbors(*pos1):
+            for nr, nc in self.neighbors(r1, c1):
                 nrisk1 = risk1 + board[nr][nc]
                 if nrisk1 >= minrisk_start[nr][nc]:
                     continue
                 minrisk_start[nr][nc] = nrisk1
-                heapq.heappush(q, (nrisk1 + risk2, nrisk1, risk2, (nr, nc), pos2))
-            for nr, nc in self.neighbors(*pos2):
+                heapq.heappush(q, (nrisk1 + risk2, nrisk1, risk2, nr, nc, r2, c2))
+            for nr, nc in self.neighbors(r2, c2):
                 nrisk2 = risk2 + board[nr][nc]
                 if nrisk2 >= minrisk_end[nr][nc]:
                     continue
                 minrisk_end[nr][nc] = nrisk2
-                heapq.heappush(q, (risk1 + nrisk2, risk1, nrisk2, pos1, (nr, nc)))
+                heapq.heappush(q, (risk1 + nrisk2, risk1, nrisk2, r1, c1, nr, nc))
         raise ValueError
 
 

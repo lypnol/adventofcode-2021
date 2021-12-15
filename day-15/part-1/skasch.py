@@ -78,3 +78,15 @@ def test_skasch() -> None:
         )
         == 40
     )
+    assert (
+        SkaschSubmission().run(
+            """
+19111
+19191
+19191
+11191
+99991
+""".strip()
+        )
+        == 14
+    )
