@@ -15,7 +15,7 @@ class ThomrenSubmission(SubmissionPy):
         height, width = len(octopuses), len(octopuses[0])
         n_flashes = 0
 
-        for step in range(n_steps):
+        for _ in range(n_steps):
             flash_stack = []
             for i, j in product(range(height), range(width)):
                 octopuses[i][j] += 1
