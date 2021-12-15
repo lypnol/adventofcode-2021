@@ -35,8 +35,6 @@ class ThomrenSubmission(SubmissionPy):
             if n_flashes == height * width:
                 return step
 
-        return n_flashes
-
 
 def neighbors(i, j, height, width):
     for di, dj in [
