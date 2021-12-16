@@ -9,7 +9,7 @@ fn main() {
     println!("{}", output);
 }
 
-fn run(input: &str) -> usize {
+fn run(input: &str) -> u64 {
     let mut t = Transmission::new(input);
     t.parse_packet().unwrap().value
 }
@@ -22,7 +22,7 @@ struct Transmission<'a> {
 struct Packet {
     version: u8,
     type_id: u8,
-    value: usize,
+    value: u64,
 }
 
 impl<'a> Transmission<'a> {
@@ -38,18 +38,18 @@ impl<'a> Transmission<'a> {
         Some((version, type_id))
     }
 
-    fn parse_literal(&mut self) -> Option<usize> {
+    fn parse_literal(&mut self) -> Option<u64> {
         let mut v = 0;
         while self.buf.get_bits(1)? == 1 {
             v <<= 4;
-            v += self.buf.get_bits(4)? as usize;
+            v += self.buf.get_bits(4)? as u64;
         }
         v <<= 4;
-        v += self.buf.get_bits(4)? as usize;
+        v += self.buf.get_bits(4)? as u64;
         Some(v)
     }
 
-    fn parse_binary_operator(&mut self, f: impl FnOnce(usize, usize) -> usize) -> Option<usize> {
+    fn parse_binary_operator(&mut self, f: impl FnOnce(u64, u64) -> u64) -> Option<u64> {
         let len_id = self.buf.get_bits(1)?;
         if len_id == 0 {
             let _bits_len = self.buf.get_bits(15)?;
@@ -63,9 +63,9 @@ impl<'a> Transmission<'a> {
 
     fn parse_reduce_operator(
         &mut self,
-        mut acc: usize,
-        mut f: impl FnMut(usize, usize) -> usize,
-    ) -> Option<usize> {
+        mut acc: u64,
+        mut f: impl FnMut(u64, u64) -> u64,
+    ) -> Option<u64> {
         let len_id = self.buf.get_bits(1)?;
         if len_id == 0 {
             let bits_len = self.buf.get_bits(15)?;
@@ -89,7 +89,7 @@ impl<'a> Transmission<'a> {
         let v = match type_id {
             0 => self.parse_reduce_operator(0, |acc, v| acc + v),
             1 => self.parse_reduce_operator(1, |acc, v| acc * v),
-            2 => self.parse_reduce_operator(usize::MAX, |acc, v| acc.min(v)),
+            2 => self.parse_reduce_operator(u64::MAX, |acc, v| acc.min(v)),
             3 => self.parse_reduce_operator(0, |acc, v| acc.max(v)),
             4 => self.parse_literal(),
             5 => self.parse_binary_operator(|a, b| if a > b { 1 } else { 0 }),
