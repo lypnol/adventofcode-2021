@@ -69,7 +69,7 @@ func evaluatePacket(b []byte, p int) (result, next int) {
 			}
 		}
 	case 2:
-		result = math.MaxInt
+		result = math.MaxInt64
 
 		var lengthTypeID int
 		lengthTypeID, p = readNBitsAtPosition(b, p, 1)
