@@ -29,60 +29,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn take_bits(&mut self, n: usize) -> usize {
-        let mut res = 0;
-        for _ in 0..n {
-            res = (res << 1) + self.next().unwrap() as usize;
-        }
-        res
-    }
-
-    fn bit_index(&mut self) -> usize {
-        return 4 * self.position + (3 - self.bit as usize);
-    }
-
-    fn parse_packet(&mut self) -> usize {
-        let _version = self.take_bits(3);
-        let type_id = self.take_bits(3);
-
-        if type_id == 4 {
-            // literal
-            let mut value = 0;
-            let mut x = self.take_bits(5);
-            while (x >> 4) == 1 {
-                value = (value << 4) + (x & 0b1111);
-                x = self.take_bits(5);
-            }
-            value = (value << 4) + (x & 0b1111);
-
-            value
-        } else {
-            // operator
-            let length_type_id = self.take_bits(1);
-            if length_type_id == 1 {
-                let n_subpackets = self.take_bits(11);
-                let mut values = Vec::with_capacity(n_subpackets);
-                for _ in 0..n_subpackets {
-                    values.push(self.parse_packet());
-                }
-                fold_values(type_id, values)
-            } else {
-                let subpackets_length = self.take_bits(15);
-                let end = self.bit_index() + subpackets_length;
-                let mut values = vec![];
-                while self.bit_index() < end {
-                    values.push(self.parse_packet());
-                }
-                fold_values(type_id, values)
-            }
-        }
-    }
-}
-
-impl<'a> Iterator for Parser<'_> {
-    type Item = bool;
-
-    fn next(&mut self) -> Option<Self::Item> {
+    fn next_bit(&mut self) -> Option<bool> {
         if self.position >= self.input.len() {
             None
         } else {
@@ -105,18 +52,73 @@ impl<'a> Iterator for Parser<'_> {
             res
         }
     }
-}
 
-fn fold_values(type_id: usize, values: Vec<usize>) -> usize {
-    match type_id {
-        0 => values.into_iter().sum(),
-        1 => values.into_iter().product(),
-        2 => values.into_iter().min().unwrap(),
-        3 => values.into_iter().max().unwrap(),
-        5 => (values[0] > values[1]) as usize,
-        6 => (values[0] < values[1]) as usize,
-        7 => (values[0] == values[1]) as usize,
-        _ => panic!("Invalid type id: {}", type_id),
+    fn next_bits(&mut self, n: usize) -> usize {
+        let mut res = 0;
+        for _ in 0..n {
+            res = (res << 1) + self.next_bit().unwrap() as usize;
+        }
+        res
+    }
+
+    fn bit_index(&mut self) -> usize {
+        return 4 * self.position + (3 - self.bit as usize);
+    }
+
+    fn parse_packet(&mut self) -> usize {
+        let _version = self.next_bits(3);
+        let type_id = self.next_bits(3);
+
+        if type_id == 4 {
+            self.parse_literal()
+        } else {
+            self.parse_operator(type_id)
+        }
+    }
+
+    fn parse_literal(&mut self) -> usize {
+        let mut value = 0;
+        let mut x = self.next_bits(5);
+        while (x >> 4) == 1 {
+            value = (value << 4) + (x & 0b1111);
+            x = self.next_bits(5);
+        }
+        value = (value << 4) + (x & 0b1111);
+
+        value
+    }
+
+    fn parse_operator(&mut self, type_id: usize) -> usize {
+        let length_type_id = self.next_bits(1);
+        if length_type_id == 1 {
+            let n_subpackets = self.next_bits(11);
+            let mut values = Vec::with_capacity(n_subpackets);
+            for _ in 0..n_subpackets {
+                values.push(self.parse_packet());
+            }
+            Self::fold_values(type_id, values)
+        } else {
+            let subpackets_length = self.next_bits(15);
+            let end = self.bit_index() + subpackets_length;
+            let mut values = vec![];
+            while self.bit_index() < end {
+                values.push(self.parse_packet());
+            }
+            Self::fold_values(type_id, values)
+        }
+    }
+
+    fn fold_values(type_id: usize, values: Vec<usize>) -> usize {
+        match type_id {
+            0 => values.into_iter().sum(),
+            1 => values.into_iter().product(),
+            2 => values.into_iter().min().unwrap(),
+            3 => values.into_iter().max().unwrap(),
+            5 => (values[0] > values[1]) as usize,
+            6 => (values[0] < values[1]) as usize,
+            7 => (values[0] == values[1]) as usize,
+            _ => panic!("Invalid type id: {}", type_id),
+        }
     }
 }
 

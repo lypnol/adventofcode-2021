@@ -29,55 +29,7 @@ impl<'a> Parser<'a> {
         }
     }
 
-    fn take_bits(&mut self, n: usize) -> usize {
-        let mut res = 0;
-        for _ in 0..n {
-            res = (res << 1) + self.next().unwrap() as usize;
-        }
-        res
-    }
-
-    fn bit_index(&mut self) -> usize {
-        return 4 * self.position + (3 - self.bit as usize);
-    }
-
-    fn parse_packet(&mut self) -> usize {
-        let version = self.take_bits(3);
-        let type_id = self.take_bits(3);
-
-        if type_id == 4 {
-            // literal
-            let mut x = self.take_bits(5);
-            while (x >> 4) == 1 {
-                x = self.take_bits(5);
-            }
-
-            version
-        } else {
-            // operator
-            let length_type_id = self.take_bits(1);
-            let mut versions_sum = version;
-            if length_type_id == 1 {
-                let n_subpackets = self.take_bits(11);
-                for _ in 0..n_subpackets {
-                    versions_sum += self.parse_packet();
-                }
-            } else {
-                let subpackets_length = self.take_bits(15);
-                let end = self.bit_index() + subpackets_length;
-                while self.bit_index() < end {
-                    versions_sum += self.parse_packet();
-                }
-            }
-            versions_sum
-        }
-    }
-}
-
-impl<'a> Iterator for Parser<'_> {
-    type Item = bool;
-
-    fn next(&mut self) -> Option<Self::Item> {
+    fn next_bit(&mut self) -> Option<bool> {
         if self.position >= self.input.len() {
             None
         } else {
@@ -99,6 +51,55 @@ impl<'a> Iterator for Parser<'_> {
 
             res
         }
+    }
+
+    fn next_bits(&mut self, n: usize) -> usize {
+        let mut res = 0;
+        for _ in 0..n {
+            res = (res << 1) + self.next_bit().unwrap() as usize;
+        }
+        res
+    }
+
+    fn bit_index(&mut self) -> usize {
+        return 4 * self.position + (3 - self.bit as usize);
+    }
+
+    fn parse_packet(&mut self) -> usize {
+        let version = self.next_bits(3);
+        let type_id = self.next_bits(3);
+
+        if type_id == 4 {
+            self.parse_literal();
+            version
+        } else {
+            version + self.parse_operator()
+        }
+    }
+
+    fn parse_literal(&mut self) {
+        let mut x = self.next_bits(5);
+        while (x >> 4) == 1 {
+            x = self.next_bits(5);
+        }
+    }
+
+    fn parse_operator(&mut self) -> usize {
+        let length_type_id = self.next_bits(1);
+        let mut versions_sum = 0;
+        if length_type_id == 1 {
+            let n_subpackets = self.next_bits(11);
+            for _ in 0..n_subpackets {
+                versions_sum += self.parse_packet();
+            }
+        } else {
+            let subpackets_length = self.next_bits(15);
+            let end = self.bit_index() + subpackets_length;
+            while self.bit_index() < end {
+                versions_sum += self.parse_packet();
+            }
+        }
+        versions_sum
     }
 }
 
