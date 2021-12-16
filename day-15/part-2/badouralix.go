@@ -62,7 +62,7 @@ func (v Vertex) String() string {
 type VertexSet []*Vertex
 
 func NewVertexSet() VertexSet {
-	return make(VertexSet, 0, TotalSize*TotalSize)
+	return make(VertexSet, 0)
 }
 
 func (vs VertexSet) Len() int {
