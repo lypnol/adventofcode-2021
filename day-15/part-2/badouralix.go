@@ -1,6 +1,7 @@
 package main
 
 import (
+	"container/heap"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -39,6 +40,8 @@ type Vertex struct {
 	Risk      int
 	TotalRisk int
 	Visited   bool
+
+	index int
 }
 
 func NewVertex(p Position, risk int) *Vertex {
@@ -47,6 +50,8 @@ func NewVertex(p Position, risk int) *Vertex {
 		Risk:      risk,
 		TotalRisk: math.MaxInt32,
 		Visited:   false,
+
+		index: -1,
 	}
 }
 
@@ -54,43 +59,41 @@ func (v Vertex) String() string {
 	return fmt.Sprintf("%s=%d", v.Position, v.TotalRisk)
 }
 
-type VertexSet struct {
-	Vertex *Vertex
-	Next   *VertexSet
+type VertexSet []*Vertex
+
+func NewVertexSet() VertexSet {
+	return make(VertexSet, 0, TotalSize*TotalSize)
 }
 
-func NewVertexSet() *VertexSet {
-	return nil
+func (vs VertexSet) Len() int {
+	return len(vs)
 }
 
-func (vs *VertexSet) Add(v *Vertex) *VertexSet {
-	if vs == nil || vs.Vertex.TotalRisk > v.TotalRisk {
-		return &VertexSet{v, vs}
-	}
-
-	vs.Next = vs.Next.Add(v)
-	return vs
+func (vs VertexSet) Less(i, j int) bool {
+	return vs[i].TotalRisk < vs[j].TotalRisk
 }
 
-func (vs *VertexSet) PopSmallest() (*VertexSet, *Vertex) {
-	return vs.Next, vs.Vertex
+func (vs VertexSet) Swap(i, j int) {
+	vs[i], vs[j] = vs[j], vs[i]
+	vs[i].index = i
+	vs[j].index = j
 }
 
-func (vs *VertexSet) RemoveIfExist(v *Vertex) *VertexSet {
-	if vs == nil || vs.Vertex.TotalRisk > v.TotalRisk {
-		return vs
-	}
-
-	if vs.Vertex == v {
-		return vs.Next
-	}
-
-	vs.Next = vs.Next.RemoveIfExist(v)
-	return vs
+func (vs *VertexSet) Push(x interface{}) {
+	n := len(*vs)
+	v := x.(*Vertex)
+	v.index = n
+	*vs = append(*vs, v)
 }
 
-func (vs VertexSet) String() string {
-	return fmt.Sprintf("%s -> %s", vs.Vertex, vs.Next)
+func (vs *VertexSet) Pop() interface{} {
+	old := *vs
+	n := len(old)
+	v := old[n-1]
+	old[n-1] = nil
+	v.index = -1
+	*vs = old[0 : n-1]
+	return v
 }
 
 type Graph struct {
@@ -152,15 +155,14 @@ func NewGraph(s string) *Graph {
 }
 
 func (g *Graph) FindLowestTotalRiskWithDijkstra() int {
-	g.Vertices[g.Start].TotalRisk = 0
-
 	remaining := NewVertexSet()
-	remaining = remaining.Add(g.Vertices[g.Start])
+	heap.Init(&remaining)
 
-	var current *Vertex
+	g.Vertices[g.Start].TotalRisk = 0
+	heap.Push(&remaining, g.Vertices[g.Start])
 
 	for {
-		remaining, current = remaining.PopSmallest()
+		current := heap.Pop(&remaining).(*Vertex)
 
 		for _, neighbor := range g.Edges[current.Position] {
 			if neighbor.Visited {
@@ -171,8 +173,11 @@ func (g *Graph) FindLowestTotalRiskWithDijkstra() int {
 				neighbor.TotalRisk = current.TotalRisk + neighbor.Risk
 			}
 
-			remaining = remaining.RemoveIfExist(neighbor)
-			remaining = remaining.Add(neighbor)
+			if neighbor.index == -1 {
+				heap.Push(&remaining, neighbor)
+			} else {
+				heap.Fix(&remaining, neighbor.index)
+			}
 		}
 
 		current.Visited = true
