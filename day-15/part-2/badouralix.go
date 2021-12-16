@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
+	"runtime/debug"
 	"strings"
 	"time"
 )
@@ -12,15 +13,25 @@ import (
 const (
 	RepeatCount = 5
 	TileSize    = 100
+	TotalSize   = TileSize * RepeatCount
 )
 
-type Position struct {
-	X int
-	Y int
-}
+type Position int
 
 func NewPosition(x, y int) Position {
-	return Position{x, y}
+	return Position(x*TotalSize + y)
+}
+
+func (p Position) GetX() int {
+	return int(p) / TotalSize
+}
+
+func (p Position) GetY() int {
+	return int(p) % TotalSize
+}
+
+func (p Position) String() string {
+	return fmt.Sprintf("(%d,%d)", p.GetX(), p.GetY())
 }
 
 type Vertex struct {
@@ -39,40 +50,59 @@ func NewVertex(p Position, risk int) *Vertex {
 	}
 }
 
-type VertexSet map[*Vertex]struct{}
-
-func NewVertexSet() VertexSet {
-	return make(VertexSet)
+func (v Vertex) String() string {
+	return fmt.Sprintf("%s=%d", v.Position, v.TotalRisk)
 }
 
-func (vs VertexSet) Add(v *Vertex) {
-	vs[v] = struct{}{}
+type VertexSet struct {
+	Vertex *Vertex
+	Next   *VertexSet
 }
 
-func (vs VertexSet) PopSmallest() (v *Vertex) {
-	currentTotalRisk := math.MaxInt32
+func NewVertexSet() *VertexSet {
+	return nil
+}
 
-	for candidate := range vs {
-		if candidate.TotalRisk < currentTotalRisk {
-			v = candidate
-			currentTotalRisk = candidate.TotalRisk
-		}
+func (vs *VertexSet) Add(v *Vertex) *VertexSet {
+	if vs == nil || vs.Vertex.TotalRisk > v.TotalRisk {
+		return &VertexSet{v, vs}
 	}
 
-	delete(vs, v)
-	return v
+	vs.Next = vs.Next.Add(v)
+	return vs
+}
+
+func (vs *VertexSet) PopSmallest() (*VertexSet, *Vertex) {
+	return vs.Next, vs.Vertex
+}
+
+func (vs *VertexSet) RemoveIfExist(v *Vertex) *VertexSet {
+	if vs == nil || vs.Vertex.TotalRisk > v.TotalRisk {
+		return vs
+	}
+
+	if vs.Vertex == v {
+		return vs.Next
+	}
+
+	vs.Next = vs.Next.RemoveIfExist(v)
+	return vs
+}
+
+func (vs VertexSet) String() string {
+	return fmt.Sprintf("%s -> %s", vs.Vertex, vs.Next)
 }
 
 type Graph struct {
-	Edges    map[Position][]*Vertex
+	Edges    [][]*Vertex
 	Finish   Position
 	Start    Position
-	Vertices map[Position]*Vertex
+	Vertices []*Vertex
 }
 
 func NewGraph(s string) *Graph {
-	edges := make(map[Position][]*Vertex)
-	vertices := make(map[Position]*Vertex)
+	edges := make([][]*Vertex, TotalSize*TotalSize)
+	vertices := make([]*Vertex, TotalSize*TotalSize)
 
 	for x, line := range strings.Split(s, "\n") {
 		for y, char := range line {
@@ -89,26 +119,33 @@ func NewGraph(s string) *Graph {
 		}
 	}
 
-	for p := range vertices {
-		edges[p] = make([]*Vertex, 0, 4)
+	for x := 0; x < TileSize; x++ {
+		for y := 0; y < TileSize; y++ {
+			for i := 0; i < RepeatCount; i++ {
+				for j := 0; j < RepeatCount; j++ {
+					p := NewPosition(x+TileSize*i, y+TileSize*j)
+					edges[p] = make([]*Vertex, 0, 4)
 
-		if v, ok := vertices[NewPosition(p.X-1, p.Y)]; ok {
-			edges[p] = append(edges[p], v)
-		}
-		if v, ok := vertices[NewPosition(p.X+1, p.Y)]; ok {
-			edges[p] = append(edges[p], v)
-		}
-		if v, ok := vertices[NewPosition(p.X, p.Y-1)]; ok {
-			edges[p] = append(edges[p], v)
-		}
-		if v, ok := vertices[NewPosition(p.X, p.Y+1)]; ok {
-			edges[p] = append(edges[p], v)
+					if p.GetX() != 0 {
+						edges[p] = append(edges[p], vertices[NewPosition(p.GetX()-1, p.GetY())])
+					}
+					if p.GetX() != TotalSize-1 {
+						edges[p] = append(edges[p], vertices[NewPosition(p.GetX()+1, p.GetY())])
+					}
+					if p.GetY() != 0 {
+						edges[p] = append(edges[p], vertices[NewPosition(p.GetX(), p.GetY()-1)])
+					}
+					if p.GetY() != TotalSize-1 {
+						edges[p] = append(edges[p], vertices[NewPosition(p.GetX(), p.GetY()+1)])
+					}
+				}
+			}
 		}
 	}
 
 	return &Graph{
 		Edges:    edges,
-		Finish:   NewPosition(TileSize*RepeatCount-1, TileSize*RepeatCount-1),
+		Finish:   NewPosition(TotalSize-1, TotalSize-1),
 		Start:    NewPosition(0, 0),
 		Vertices: vertices,
 	}
@@ -118,10 +155,12 @@ func (g *Graph) FindLowestTotalRiskWithDijkstra() int {
 	g.Vertices[g.Start].TotalRisk = 0
 
 	remaining := NewVertexSet()
-	remaining.Add(g.Vertices[g.Start])
+	remaining = remaining.Add(g.Vertices[g.Start])
+
+	var current *Vertex
 
 	for {
-		current := remaining.PopSmallest()
+		remaining, current = remaining.PopSmallest()
 
 		for _, neighbor := range g.Edges[current.Position] {
 			if neighbor.Visited {
@@ -132,7 +171,8 @@ func (g *Graph) FindLowestTotalRiskWithDijkstra() int {
 				neighbor.TotalRisk = current.TotalRisk + neighbor.Risk
 			}
 
-			remaining.Add(neighbor)
+			remaining = remaining.RemoveIfExist(neighbor)
+			remaining = remaining.Add(neighbor)
 		}
 
 		current.Visited = true
@@ -152,7 +192,15 @@ func run(s string) int {
 
 func main() {
 	// Uncomment this line to disable garbage collection
-	// debug.SetGCPercent(-1)
+	debug.SetGCPercent(-1)
+
+	// defer profile.Start(profile.CPUProfile).Stop()
+	// defer profile.Start(profile.GoroutineProfile).Stop()
+	// defer profile.Start(profile.BlockProfile).Stop()
+	// defer profile.Start(profile.ThreadcreationProfile).Stop()
+	// defer profile.Start(profile.MemProfileHeap).Stop()
+	// defer profile.Start(profile.MemProfileAllocs).Stop()
+	// defer profile.Start(profile.MutexProfile).Stop()
 
 	var input []byte
 	var err error
