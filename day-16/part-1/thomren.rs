@@ -10,78 +10,96 @@ fn main() {
 }
 
 fn run(input: &str) -> usize {
-    let bits = hex_to_bin(input);
-
-    parse_packet(&bits[..], 0).1
+    let mut parser = Parser::new(input.as_bytes());
+    parser.parse_packet()
 }
 
-fn parse_packet(s: &str, position: usize) -> (usize, usize) {
-    if position >= s.len() - 6 {
-        return (position + 1, 0);
-    }
-
-    let s_bytes = s.as_bytes();
-    let version = bin_to_dec(&s_bytes[position..(position + 3)]);
-    let type_id = bin_to_dec(&s_bytes[(position + 3)..(position + 6)]);
-
-    let mut p = position + 6;
-    let mut versions_sum = version;
-    match type_id {
-        4 => {
-            let mut literal_value = 0;
-            while s_bytes[p] == b'1' {
-                literal_value = (literal_value << 4) + bin_to_dec(&s_bytes[(p + 1)..(p + 5)]);
-                p += 5;
-            }
-            literal_value = (literal_value << 4) + bin_to_dec(&s_bytes[(p + 1)..(p + 5)]);
-            p += 5;
-        }
-        _ => {
-            let length_type_id = s_bytes[p];
-            p += 1;
-            match length_type_id == b'1' {
-                true => {
-                    let n_subpackets = bin_to_dec(&s_bytes[p..(p + 11)]);
-                    p += 11;
-                    for _ in 0..n_subpackets {
-                        let (next_pos, v) = parse_packet(s, p);
-                        p = next_pos;
-                        versions_sum += v;
-                    }
-                }
-                false => {
-                    let subpackets_length = bin_to_dec(&s_bytes[p..(p + 15)]);
-                    p += 15;
-                    let end = p + subpackets_length;
-                    while p < end {
-                        let (next_pos, v) = parse_packet(s, p);
-                        p = next_pos;
-                        versions_sum += v;
-                    }
-                }
-            }
-        }
-    }
-    (p, versions_sum)
+struct Parser<'a> {
+    input: &'a [u8],
+    position: usize,
+    bit: u8,
 }
 
-fn hex_to_bin(hex_string: &str) -> String {
-    hex_string
-        .chars()
-        .filter_map(|c| {
-            if let Ok(b) = u8::from_str_radix(&c.to_string(), 16) {
-                Some(format!("{:04b}", b))
+impl<'a> Parser<'a> {
+    fn new(input: &'a [u8]) -> Self {
+        Self {
+            input,
+            position: 0,
+            bit: 3,
+        }
+    }
+
+    fn take_bits(&mut self, n: usize) -> usize {
+        let mut res = 0;
+        for _ in 0..n {
+            res = (res << 1) + self.next().unwrap() as usize;
+        }
+        res
+    }
+
+    fn bit_index(&mut self) -> usize {
+        return 4 * self.position + (3 - self.bit as usize);
+    }
+
+    fn parse_packet(&mut self) -> usize {
+        let version = self.take_bits(3);
+        let type_id = self.take_bits(3);
+
+        if type_id == 4 {
+            // literal
+            let mut x = self.take_bits(5);
+            while (x >> 4) == 1 {
+                x = self.take_bits(5);
+            }
+
+            version
+        } else {
+            // operator
+            let length_type_id = self.take_bits(1);
+            let mut versions_sum = version;
+            if length_type_id == 1 {
+                let n_subpackets = self.take_bits(11);
+                for _ in 0..n_subpackets {
+                    versions_sum += self.parse_packet();
+                }
             } else {
-                None
+                let subpackets_length = self.take_bits(15);
+                let end = self.bit_index() + subpackets_length;
+                while self.bit_index() < end {
+                    versions_sum += self.parse_packet();
+                }
             }
-        })
-        .collect::<Vec<String>>()
-        .join("")
+            versions_sum
+        }
+    }
 }
 
-fn bin_to_dec(bits: &[u8]) -> usize {
-    bits.iter()
-        .fold(0, |acc, x| (acc << 1) + (x - b'0') as usize)
+impl<'a> Iterator for Parser<'_> {
+    type Item = bool;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.position >= self.input.len() {
+            None
+        } else {
+            let hex = self.input[self.position];
+            let dec = if hex < b'A' {
+                hex - b'0'
+            } else {
+                10 + (hex - b'A')
+            };
+
+            let res = Some(((dec >> self.bit) & 1) == 1);
+
+            if self.bit == 0 {
+                self.position += 1;
+                self.bit = 3;
+            } else {
+                self.bit -= 1;
+            }
+
+            res
+        }
+    }
 }
 
 #[cfg(test)]
@@ -97,26 +115,5 @@ mod tests {
         assert_eq!(run("620080001611562C8802118E34"), 12);
         assert_eq!(run("C0015000016115A2E0802F182340"), 23);
         assert_eq!(run("A0016C880162017C3686B18A3D4780"), 31);
-    }
-
-    #[test]
-    fn bin_to_dec_test() {
-        assert_eq!(bin_to_dec("111".as_bytes()), 7);
-        assert_eq!(bin_to_dec("10011".as_bytes()), 19);
-        assert_eq!(bin_to_dec("00000".as_bytes()), 0);
-        assert_eq!(bin_to_dec("0010".as_bytes()), 2);
-    }
-
-    #[test]
-    fn hex_to_bin_test() {
-        assert_eq!(hex_to_bin("D2FE28"), "110100101111111000101000");
-        assert_eq!(
-            hex_to_bin("38006F45291200"),
-            "00111000000000000110111101000101001010010001001000000000"
-        );
-        assert_eq!(
-            hex_to_bin("EE00D40C823060"),
-            "11101110000000001101010000001100100000100011000001100000"
-        );
     }
 }
