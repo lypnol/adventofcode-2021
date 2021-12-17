@@ -12,8 +12,11 @@ fn main() {
 
 fn run(input: &str) -> isize {
     let target = parse_target(input);
-    assert!(target.xmin >= 0);
 
+    // if the target is above y = 0, we need to try higher values for y
+    assert!(target.xmin >= 0 && target.ymax <= 0);
+
+    // x(t) goes from 0 to dx(dx+1)/2 so we must have dx >= solution of dx²+dx-2xmin=0
     let dxmin = (-1. + (1. + 8. * target.xmin as f32).sqrt() / 2.).ceil() as isize;
     let dxrange = dxmin..=target.xmax;
     let dymax = target.ymin.abs().max(target.ymax.abs());

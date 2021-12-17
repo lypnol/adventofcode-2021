@@ -12,7 +12,9 @@ fn main() {
 
 fn run(input: &str) -> usize {
     let target = parse_target(input);
-    assert!(target.xmin >= 0);
+
+    // if the target is above y = 0, we need to try higher values for y
+    assert!(target.xmin >= 0 && target.ymax <= 0);
 
     let dxmin = (-1. + (1. + 8. * target.xmin as f32).sqrt() / 2.).ceil() as isize;
     let dxrange = dxmin..=target.xmax;
