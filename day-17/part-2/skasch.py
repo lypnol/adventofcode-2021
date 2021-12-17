@@ -51,8 +51,8 @@ def reach_range_vx(
 
 def reach_range_y_in(y1: int, y2: int, steps: int) -> Set[int]:
     max_vy = (y2 + steps * (steps - 1) // 2) // steps
-    min_vy = (y1 + steps * (steps - 1) // 2 + steps - 1) // steps
-    return {vy for vy in range(min_vy, max_vy + 1)}
+    min_vy = (y1 + steps * (steps + 1) // 2 - 1) // steps
+    return set(range(min_vy, max_vy + 1))
 
 
 def parse(s: str) -> Tuple[int, int, int, int]:
