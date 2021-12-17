@@ -1,60 +1,13 @@
 import bisect
 import re
-from typing import Tuple
+from typing import List, Tuple
 
 from tool.runners.python import SubmissionPy
 
 REGEX = re.compile(r"target area: x=([-0-9]+)..([-0-9]+), y=([-0-9]+)..([-0-9]+)")
-X_TARGETS = [
-    0,
-    1,
-    3,
-    6,
-    10,
-    15,
-    21,
-    28,
-    36,
-    45,
-    55,
-    66,
-    78,
-    91,
-    105,
-    120,
-    136,
-    153,
-    171,
-    190,
-    210,
-    231,
-    253,
-    276,
-    300,
-    325,
-    351,
-    378,
-    406,
-    435,
-    465,
-    496,
-    528,
-    561,
-    595,
-    630,
-    666,
-    703,
-    741,
-    780,
-    820,
-    861,
-    903,
-    946,
-    990,
-]
 
 
-def find_vx(x1: int, x2: int) -> int:
+def find_vx(x1: int, x2: int, x_targets: List[int]) -> int:
     if x1 <= 0 <= x2:
         return 0
     if x2 < 0:
@@ -62,11 +15,11 @@ def find_vx(x1: int, x2: int) -> int:
         x1, x2 = -x2, -x1
     else:
         m = 1
-    idx1 = bisect.bisect_left(X_TARGETS, x1)
-    idx2 = bisect.bisect_left(X_TARGETS, x2)
-    if X_TARGETS[idx1] == x1:
+    idx1 = bisect.bisect_left(x_targets, x1)
+    idx2 = bisect.bisect_left(x_targets, x2)
+    if x_targets[idx1] == x1:
         return m * idx1
-    if X_TARGETS[idx2] == x2:
+    if x_targets[idx2] == x2:
         return m * idx1
     if idx1 == idx2:
         raise ValueError
@@ -96,7 +49,8 @@ class SkaschSubmission(SubmissionPy):
         """
         # Your code goes here
         x1, x2, y1, y2 = parse(s)
-        vx = find_vx(x1, x2)
+        x_targets = [n * (n + 1) // 2 for n in range(max(-x1, x2) + 1)]
+        vx = find_vx(x1, x2, x_targets)
         vy, pos = find_vy(y1, y2)
         assert vx <= vy + (-1 if pos else 1)
         return (vy * (vy + 1)) // 2
