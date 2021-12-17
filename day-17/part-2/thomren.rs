@@ -12,20 +12,14 @@ fn main() {
 
 fn run(input: &str) -> usize {
     let target = parse_target(input);
+    assert!(target.xmin >= 0);
 
-    let dxmin = (2. * target.xmin as f32).sqrt().floor() as isize;
-    (dxmin..=target.xmax)
-        .flat_map(|dx| (target.ymin..1000).map(move |dy| (dx, dy)))
-        .filter_map(|(dx, dy)| match Probe::new(dx, dy).shoot(&target) {
-            ProbeResult {
-                hit_target: false,
-                ymax: _,
-            } => None,
-            ProbeResult {
-                hit_target: true,
-                ymax,
-            } => Some(ymax),
-        })
+    let dxmin = (-1. + (1. + 8. * target.xmin as f32).sqrt() / 2.).ceil() as isize;
+    let dxrange = dxmin..=target.xmax;
+    let dymax = target.ymin.abs().max(target.ymax.abs());
+    dxrange
+        .flat_map(|dx| (-dymax..=dymax).map(move |dy| (dx, dy)))
+        .filter(|(dx, dy)| Probe::new(*dx, *dy).shoot(&target).hit_target)
         .count()
 }
 
@@ -75,10 +69,7 @@ impl Probe {
 
     fn shoot(&mut self, target: &Target) -> ProbeResult {
         let mut ymax = self.y;
-        while !self.in_target(&target)
-            && self.y >= target.ymin
-            && (self.dx >= 0 && self.x <= target.xmax || self.dx < 0 && self.x >= target.xmin)
-        {
+        while !self.in_target(&target) && !self.overshot_target(&target) {
             self.step();
             ymax = ymax.max(self.y);
         }
@@ -101,6 +92,10 @@ impl Probe {
             && self.x <= target.xmax
             && self.y >= target.ymin
             && self.y <= target.ymax
+    }
+
+    fn overshot_target(&self, target: &Target) -> bool {
+        (self.dy <= 0 && self.y < target.ymin) || self.x > target.xmax
     }
 }
 
