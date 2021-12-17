@@ -1,4 +1,5 @@
 import bisect
+import functools
 import re
 from typing import List, Optional, Set, Tuple
 
@@ -49,9 +50,10 @@ def reach_range_vx(
     return min_t, max_t
 
 
+@functools.lru_cache(None)
 def reach_range_y_in(y1: int, y2: int, steps: int) -> Set[int]:
-    max_vy = (y2 + steps * (steps - 1) // 2) // steps
     min_vy = (y1 + steps * (steps + 1) // 2 - 1) // steps
+    max_vy = (y2 + steps * (steps - 1) // 2) // steps
     return set(range(min_vy, max_vy + 1))
 
 
