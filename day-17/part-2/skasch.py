@@ -7,6 +7,25 @@ from tool.runners.python import SubmissionPy
 REGEX = re.compile(r"target area: x=([-0-9]+)..([-0-9]+), y=([-0-9]+)..([-0-9]+)")
 
 
+def find_vx(x1: int, x2: int, x_targets: List[int]) -> int:
+    if x1 <= 0 <= x2:
+        return 0
+    if x2 < 0:
+        m = -1
+        x1, x2 = -x2, -x1
+    else:
+        m = 1
+    idx1 = bisect.bisect_left(x_targets, x1)
+    idx2 = bisect.bisect_left(x_targets, x2)
+    if x_targets[idx1] == x1:
+        return m * idx1
+    if x_targets[idx2] == x2:
+        return m * idx1
+    if idx1 == idx2:
+        raise ValueError
+    return m * idx1
+
+
 def find_vy(y1: int, y2: int) -> Tuple[int, bool]:
     vy1 = y1 if y1 >= 0 else -y1 - 1
     vy2 = y2 if y2 >= 0 else -y2 - 1
@@ -56,7 +75,8 @@ class SkaschSubmission(SubmissionPy):
             x1, x2 = -x2, -x1
         x_targets = [n * (n + 1) // 2 for n in range(x2 + 1)]
         res = 0
-        for vx in range(x2 + 1):
+        min_vx = find_vx(x1, x2, x_targets)
+        for vx in range(min_vx, x2 + 1):
             min_steps, max_steps = reach_range_vx(x1, x2, vx, x_targets)
             if min_steps is None:
                 continue
