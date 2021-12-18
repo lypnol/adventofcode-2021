@@ -28,6 +28,11 @@ class Node:
             right.parent = res
         return res
 
+    def __repr__(self) -> str:
+        if self.val is not None:
+            return str(self.val)
+        return f"[{self.left},{self.right}]"
+
 
 DIGITS = set(string.digits)
 
@@ -54,6 +59,7 @@ def parse(s: str) -> Iterable[Node]:
 
 
 DEPTH = 5
+N = 1 << DEPTH
 
 
 def iterate_leaves(
@@ -69,14 +75,12 @@ def iterate_leaves(
 
 
 @dc.dataclass
-class LinkedListNode:
+class Bundle:
     node: Node
     index: int
     depth: int
-    prv: Optional["LinkedListNode"] = None  # type: ignore
-    nxt: Optional["LinkedListNode"] = None  # type: ignore
 
-    def __lt__(self, other: "LinkedListNode") -> bool:
+    def __lt__(self, other: "Bundle") -> bool:
         return self.index < other.index
 
 
@@ -84,57 +88,61 @@ def add(left: Node, right: Node) -> Node:
     node = Node(left=left, right=right)
     left.parent = node
     right.parent = node
-    tail = None
-    toodeep: List[LinkedListNode] = []
-    toohigh: List[LinkedListNode] = []
+    bundles: List[Optional[Bundle]] = [None] * N
+    toodeep: List[int] = []
+    toohigh: List[int] = []
     for leaf, depth, index in iterate_leaves(node):
-        new_node = LinkedListNode(leaf, index, depth, prv=tail)
-        if tail is None:
-            tail = new_node
-        else:
-            tail.nxt = new_node
-            tail = tail.nxt
+        bundle = Bundle(leaf, index, depth)
+        bundles[index] = bundle
         if depth == DEPTH:
-            heapq.heappush(toodeep, tail)
+            heapq.heappush(toodeep, index)
     while toodeep or toohigh:
         if toodeep:
-            left_node = heapq.heappop(toodeep)
-            left_leaf = left_node.node
-            right_node = heapq.heappop(toodeep)
-            right_leaf = right_node.node
+            left_bundle = bundles[heapq.heappop(toodeep)]
+            right_bundle = bundles[heapq.heappop(toodeep)]
+            assert left_bundle is not None
+            assert right_bundle is not None
+            left_leaf = left_bundle.node
+            right_leaf = right_bundle.node
             assert left_leaf.val is not None
             assert right_leaf.val is not None
-            prev_node = left_node.prv
-            next_node = right_node.nxt
+            prev_index = left_bundle.index - 1
+            while prev_index >= 0 and bundles[prev_index] is None:
+                prev_index -= 1
+            prev_bundle = None
+            if prev_index >= 0:
+                prev_bundle = bundles[prev_index]
+            next_index = right_bundle.index + 1
+            while next_index < N and bundles[next_index] is None:
+                next_index += 1
+            next_bundle = None
+            if next_index < N:
+                next_bundle = bundles[next_index]
             parent = left_leaf.parent
             assert parent is not None
             parent.left = None
             parent.right = None
             parent.val = 0
-            new_node = LinkedListNode(parent, left_node.index, left_node.depth - 1)
-            if prev_node is not None:
-                assert prev_node.node.val is not None
-                prev_node.node.val += left_leaf.val
-                if prev_node.node.val >= 10:
-                    heapq.heappush(toohigh, prev_node)
-                prev_node.nxt = new_node
-                new_node.prv = prev_node
-            if next_node is not None:
-                assert next_node.node.val is not None
-                next_node.node.val += right_leaf.val
-                if next_node.node.val >= 10:
-                    heapq.heappush(toohigh, next_node)
-                next_node.prv = new_node
-                new_node.nxt = next_node
-            del left_node.node
-            del right_node.node
+            bundles[right_bundle.index] = None
+            new_bundle = Bundle(parent, left_bundle.index, left_bundle.depth - 1)
+            bundles[left_bundle.index] = new_bundle
+            if prev_bundle is not None:
+                assert prev_bundle.node.val is not None
+                prev_bundle.node.val += left_leaf.val
+                if prev_bundle.node.val >= 10:
+                    heapq.heappush(toohigh, prev_bundle.index)
+            if next_bundle is not None:
+                assert next_bundle.node.val is not None
+                next_bundle.node.val += right_leaf.val
+                if next_bundle.node.val >= 10:
+                    heapq.heappush(toohigh, next_bundle.index)
         elif toohigh:
-            high_node = heapq.heappop(toohigh)
-            try:
-                leaf = high_node.node
-            except AttributeError:
-                continue
+            high_bundle = bundles[heapq.heappop(toohigh)]
+            assert high_bundle is not None
+            leaf = high_bundle.node
             if leaf.val is None:
+                continue
+            if leaf.val < 10:
                 continue
             left_val = leaf.val // 2
             right_val = leaf.val - left_val
@@ -143,29 +151,24 @@ def add(left: Node, right: Node) -> Node:
             leaf.val = None
             leaf.left = left_leaf
             leaf.right = right_leaf
-            left_node = LinkedListNode(left_leaf, high_node.index, high_node.depth + 1)
-            right_node = LinkedListNode(
+            left_bundle = Bundle(left_leaf, high_bundle.index, high_bundle.depth + 1)
+            right_index = high_bundle.index + (1 << (DEPTH - high_bundle.depth - 1))
+            right_bundle = Bundle(
                 right_leaf,
-                high_node.index + (1 << (DEPTH - high_node.depth - 1)),
-                high_node.depth + 1,
-                prv=left_node,
+                right_index,
+                high_bundle.depth + 1,
             )
-            left_node.nxt = right_node
-            if high_node.prv is not None:
-                high_node.prv.nxt = left_node
-                left_node.prv = high_node.prv
-            if high_node.nxt is not None:
-                high_node.nxt.prv = right_node
-                right_node.nxt = high_node.nxt
-            if high_node.depth + 1 >= DEPTH:
-                heapq.heappush(toodeep, left_node)
-                heapq.heappush(toodeep, right_node)
+            bundles[high_bundle.index] = left_bundle
+            bundles[right_index] = right_bundle
+            if high_bundle.depth + 1 >= DEPTH:
+                heapq.heappush(toodeep, left_bundle.index)
+                heapq.heappush(toodeep, right_bundle.index)
             else:
-                if left_node.node.val is not None and left_node.node.val >= 10:
-                    heapq.heappush(toohigh, left_node)
-                if right_node.node.val is not None and right_node.node.val >= 10:
-                    heapq.heappush(toohigh, right_node)
-            del high_node.node
+                if left_bundle.node.val is not None and left_bundle.node.val >= 10:
+                    heapq.heappush(toohigh, left_bundle.index)
+                if right_bundle.node.val is not None and right_bundle.node.val >= 10:
+                    heapq.heappush(toohigh, right_bundle.index)
+            del high_bundle.node
     return node
 
 
@@ -188,10 +191,12 @@ class SkaschSubmission(SubmissionPy):
         """
         # Your code goes here
         numbers = list(parse(s))
-        return max(
-            magnitude(add(num1.copy(), num2.copy()))
-            for num1, num2 in itertools.permutations(numbers, 2)
-        )
+        res = 0
+        for (i, num1), (j, num2) in itertools.permutations(enumerate(numbers), 2):
+            if j > i:
+                num2 = num2.copy()
+            res = max(res, magnitude(add(num1, num2)))
+        return res
 
 
 def test_skasch() -> None:
