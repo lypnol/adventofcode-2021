@@ -190,13 +190,10 @@ class SkaschSubmission(SubmissionPy):
         :return: solution flag
         """
         # Your code goes here
-        numbers = list(parse(s))
-        res = 0
-        for (i, num1), (j, num2) in itertools.permutations(enumerate(numbers), 2):
-            if j > i:
-                num2 = num2.copy()
-            res = max(res, magnitude(add(num1, num2)))
-        return res
+        return max(
+            magnitude(add(num1.copy(), num2.copy()))
+            for num1, num2 in itertools.permutations(parse(s), 2)
+        )
 
 
 def test_skasch() -> None:
