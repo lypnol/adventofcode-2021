@@ -84,6 +84,81 @@ class Bundle:
         return self.index < other.index
 
 
+def process_toodeep(
+    left_bundle: Bundle,
+    right_bundle: Bundle,
+    toohigh: List[int],
+    bundles: List[Optional[Bundle]],
+) -> None:
+    left_leaf = left_bundle.node
+    right_leaf = right_bundle.node
+    assert left_leaf.val is not None and right_leaf.val is not None
+    prev_bundle = None
+    for prev_index in reversed(range(left_bundle.index)):
+        prev_bundle = bundles[prev_index]
+        if prev_bundle is not None:
+            break
+    next_bundle = None
+    for next_index in range(right_bundle.index + 1, N):
+        next_bundle = bundles[next_index]
+        if next_bundle is not None:
+            break
+    parent = left_leaf.parent
+    assert parent is not None
+    parent.left = None
+    parent.right = None
+    parent.val = 0
+    bundles[right_bundle.index] = None
+    new_bundle = Bundle(parent, left_bundle.index, left_bundle.depth - 1)
+    bundles[left_bundle.index] = new_bundle
+    if prev_bundle is not None:
+        assert prev_bundle.node.val is not None
+        prev_bundle.node.val += left_leaf.val
+        if prev_bundle.node.val >= 10:
+            heapq.heappush(toohigh, prev_bundle.index)
+    if next_bundle is not None:
+        assert next_bundle.node.val is not None
+        next_bundle.node.val += right_leaf.val
+        if next_bundle.node.val >= 10:
+            heapq.heappush(toohigh, next_bundle.index)
+
+
+def process_toohigh(
+    toohigh: List[int], toodeep: List[int], bundles: List[Optional[Bundle]]
+) -> None:
+    high_bundle = bundles[heapq.heappop(toohigh)]
+    assert high_bundle is not None
+    leaf = high_bundle.node
+    if leaf.val is None:
+        return
+    if leaf.val < 10:
+        return
+    left_val = leaf.val // 2
+    right_val = leaf.val - left_val
+    left_leaf = Node(left_val, leaf)
+    right_leaf = Node(right_val, leaf)
+    leaf.val = None
+    leaf.left = left_leaf
+    leaf.right = right_leaf
+    left_bundle = Bundle(left_leaf, high_bundle.index, high_bundle.depth + 1)
+    right_index = high_bundle.index + (1 << (DEPTH - high_bundle.depth - 1))
+    right_bundle = Bundle(
+        right_leaf,
+        right_index,
+        high_bundle.depth + 1,
+    )
+    bundles[high_bundle.index] = left_bundle
+    bundles[right_index] = right_bundle
+    if high_bundle.depth + 1 >= DEPTH:
+        heapq.heappush(toodeep, left_bundle.index)
+        heapq.heappush(toodeep, right_bundle.index)
+    else:
+        if left_bundle.node.val is not None and left_bundle.node.val >= 10:
+            heapq.heappush(toohigh, left_bundle.index)
+        if right_bundle.node.val is not None and right_bundle.node.val >= 10:
+            heapq.heappush(toohigh, right_bundle.index)
+
+
 def add(left: Node, right: Node) -> Node:
     node = Node(left=left, right=right)
     left.parent = node
@@ -102,73 +177,9 @@ def add(left: Node, right: Node) -> Node:
             right_bundle = bundles[heapq.heappop(toodeep)]
             assert left_bundle is not None
             assert right_bundle is not None
-            left_leaf = left_bundle.node
-            right_leaf = right_bundle.node
-            assert left_leaf.val is not None
-            assert right_leaf.val is not None
-            prev_index = left_bundle.index - 1
-            while prev_index >= 0 and bundles[prev_index] is None:
-                prev_index -= 1
-            prev_bundle = None
-            if prev_index >= 0:
-                prev_bundle = bundles[prev_index]
-            next_index = right_bundle.index + 1
-            while next_index < N and bundles[next_index] is None:
-                next_index += 1
-            next_bundle = None
-            if next_index < N:
-                next_bundle = bundles[next_index]
-            parent = left_leaf.parent
-            assert parent is not None
-            parent.left = None
-            parent.right = None
-            parent.val = 0
-            bundles[right_bundle.index] = None
-            new_bundle = Bundle(parent, left_bundle.index, left_bundle.depth - 1)
-            bundles[left_bundle.index] = new_bundle
-            if prev_bundle is not None:
-                assert prev_bundle.node.val is not None
-                prev_bundle.node.val += left_leaf.val
-                if prev_bundle.node.val >= 10:
-                    heapq.heappush(toohigh, prev_bundle.index)
-            if next_bundle is not None:
-                assert next_bundle.node.val is not None
-                next_bundle.node.val += right_leaf.val
-                if next_bundle.node.val >= 10:
-                    heapq.heappush(toohigh, next_bundle.index)
+            process_toodeep(left_bundle, right_bundle, toohigh, bundles)
         elif toohigh:
-            high_bundle = bundles[heapq.heappop(toohigh)]
-            assert high_bundle is not None
-            leaf = high_bundle.node
-            if leaf.val is None:
-                continue
-            if leaf.val < 10:
-                continue
-            left_val = leaf.val // 2
-            right_val = leaf.val - left_val
-            left_leaf = Node(left_val, leaf)
-            right_leaf = Node(right_val, leaf)
-            leaf.val = None
-            leaf.left = left_leaf
-            leaf.right = right_leaf
-            left_bundle = Bundle(left_leaf, high_bundle.index, high_bundle.depth + 1)
-            right_index = high_bundle.index + (1 << (DEPTH - high_bundle.depth - 1))
-            right_bundle = Bundle(
-                right_leaf,
-                right_index,
-                high_bundle.depth + 1,
-            )
-            bundles[high_bundle.index] = left_bundle
-            bundles[right_index] = right_bundle
-            if high_bundle.depth + 1 >= DEPTH:
-                heapq.heappush(toodeep, left_bundle.index)
-                heapq.heappush(toodeep, right_bundle.index)
-            else:
-                if left_bundle.node.val is not None and left_bundle.node.val >= 10:
-                    heapq.heappush(toohigh, left_bundle.index)
-                if right_bundle.node.val is not None and right_bundle.node.val >= 10:
-                    heapq.heappush(toohigh, right_bundle.index)
-            del high_bundle.node
+            process_toohigh(toohigh, toodeep, bundles)
     return node
 
 
