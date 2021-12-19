@@ -1,4 +1,4 @@
-from typing import List, Optional, Set, Tuple
+from typing import List, Optional, Set, Tuple, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -249,6 +249,41 @@ def parse(s: str) -> List[Array]:
     return scanners[1:]
 
 
+def find_tensors(scanners: List[Array]) -> List[Tensor]:
+    tensors: List[Optional[Tensor]] = [None] * len(scanners)
+    tensors[0] = (np.array([0, 0, 0]), ORIENTATIONS[0])
+    found = [0]
+    remaining = set(range(1, len(scanners)))
+    compared = set()
+    while remaining:
+        idx2: Optional[int] = None
+        for idx1 in found:
+            t1 = tensors[idx1]
+            t2 = None
+            assert t1 is not None
+            scanner1 = scanners[idx1]
+            for idx2 in remaining:
+                if tuple(sorted([idx1, idx2])) in compared:
+                    continue
+                compared.add(tuple(sorted([idx1, idx2])))
+                scanner2 = scanners[idx2]
+                t2 = find_overlap(t1, scanner1, scanner2)
+                if t2 is not None:
+                    break
+            if t2 is not None:
+                assert idx2 is not None
+                break
+        else:
+            raise RuntimeError
+        # print(idx2)
+        assert t2 is not None
+        assert idx2 is not None
+        tensors[idx2] = t2
+        remaining.remove(idx2)
+        found.append(idx2)
+    return cast(List[Tensor], tensors)
+
+
 class SkaschSubmission(SubmissionPy):
     def run(self, s: str) -> int:
         """
@@ -257,40 +292,9 @@ class SkaschSubmission(SubmissionPy):
         """
         # Your code goes here
         scanners = parse(s)
-        tensors: List[Optional[Tensor]] = [None] * len(scanners)
-        tensors[0] = (np.array([0, 0, 0]), ORIENTATIONS[0])
-        found = [0]
-        remaining = set(range(1, len(scanners)))
-        compared = set()
-        while remaining:
-            idx2: Optional[int] = None
-            for idx1 in found:
-                t1 = tensors[idx1]
-                t2 = None
-                assert t1 is not None
-                scanner1 = scanners[idx1]
-                for idx2 in remaining:
-                    if tuple(sorted([idx1, idx2])) in compared:
-                        continue
-                    compared.add(tuple(sorted([idx1, idx2])))
-                    scanner2 = scanners[idx2]
-                    t2 = find_overlap(t1, scanner1, scanner2)
-                    if t2 is not None:
-                        break
-                if t2 is not None:
-                    assert idx2 is not None
-                    break
-            else:
-                raise RuntimeError
-            # print(idx2)
-            assert t2 is not None
-            assert idx2 is not None
-            tensors[idx2] = t2
-            remaining.remove(idx2)
-            found.append(idx2)
         beacons = set()
+        tensors = find_tensors(scanners)
         for tensor, scanner in zip(tensors, scanners):
-            assert tensor is not None
             for beacon in absolute(tensor, scanner):
                 beacons.add(tuple(beacon))
         return len(beacons)
