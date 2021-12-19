@@ -208,19 +208,22 @@ def find_overlap(
     abs1set: Set[Tuple[int, int, int]] = {
         (beacon[0], beacon[1], beacon[2]) for beacon in abs1  # type: ignore
     }
+    n_beacons2 = scanner2.shape[0]
+    scanner2_rots = [scanner2 @ rot2 for rot2 in ORIENTATIONS]
     for idx2, b in enumerate(scanner2):
         for beacon1 in abs1:
             toofar = set()
-            for rot2 in ORIENTATIONS:
-                beacon2rel = b @ rot2
+            for idx_rot, rot2 in enumerate(ORIENTATIONS):
+                beacon2rel = scanner2_rots[idx_rot][idx2]
                 pos2 = beacon1 - beacon2rel
                 t2 = pos2, rot2
                 found = 1
-                for idx, beacon2 in enumerate(absolute(t2, scanner2)):
-                    if idx == idx2:
-                        continue
+                for idx in range(n_beacons2):
                     if idx in toofar:
                         continue
+                    if idx == idx2:
+                        continue
+                    beacon2 = scanner2_rots[idx_rot][idx] + pos2
                     if not is_visible(
                         pos10, pos11, pos12, beacon2[0], beacon2[1], beacon2[2]
                     ):
@@ -447,7 +450,3 @@ def test_skasch() -> None:
         )
         == 79
     )
-
-
-if __name__ == "__main__":
-    test_skasch()
