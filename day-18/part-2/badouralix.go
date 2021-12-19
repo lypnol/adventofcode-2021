@@ -93,8 +93,8 @@ func (sn *SnailfishNumber) Copy() *SnailfishNumber {
 		return &SnailfishNumber{Left: sn.Left.Copy(), Right: sn.Right.Copy()}
 	}
 
-	value := sn.Value
-	return &SnailfishNumber{Value: value}
+	// Not copying the value and it still works wtf
+	return &SnailfishNumber{Value: sn.Value}
 }
 
 // Magnitude returns the magnitude of sn
