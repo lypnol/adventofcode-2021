@@ -1,4 +1,4 @@
-from typing import Iterable, List, Optional, Tuple
+from typing import List, Optional, Set, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -178,59 +178,74 @@ ORIENTATIONS = [
     ),
 ]
 
-
-def is_visible(pos: Array, beacon: Array) -> bool:
-    delta = pos - beacon
-    return bool(((-1000 <= delta) & (delta <= 1000)).all())
+DISTANCE = 1000
+MIN_MATCHES = 8
 
 
-def absolute(t: Tensor, scanner: List[Array]) -> Iterable[Array]:
+def is_visible(
+    pos0: int, pos1: int, pos2: int, beacon0: int, beacon1: int, beacon2: int
+) -> bool:
+    return (
+        -DISTANCE <= pos0 - beacon0 <= DISTANCE
+        and -DISTANCE <= pos1 - beacon1 <= DISTANCE
+        and -DISTANCE <= pos2 - beacon2 <= DISTANCE
+    )
+
+
+def absolute(t: Tensor, scanner: Array) -> Array:
     pos, rot = t
-    for beacon in scanner:
-        yield rot @ beacon + pos
+    return scanner @ rot + pos
 
 
 def find_overlap(
     t1: Tensor,
-    scanner1: List[Array],
-    scanner2: List[Array],
+    scanner1: Array,
+    scanner2: Array,
 ) -> Optional[Tensor]:
     pos1, _ = t1
+    pos10, pos11, pos12 = pos1[0], pos1[1], pos1[2]
     abs1 = list(absolute(t1, scanner1))
-    abs1set = {tuple(beacon) for beacon in abs1}
-    for rot2 in ORIENTATIONS:
-        for beacon2relidx, beacon2rel in enumerate(rot2 @ b for b in scanner2):
-            for beacon1 in abs1:
+    abs1set: Set[Tuple[int, int, int]] = {
+        (beacon[0], beacon[1], beacon[2]) for beacon in abs1  # type: ignore
+    }
+    for idx2, b in enumerate(scanner2):
+        for beacon1 in abs1:
+            toofar = set()
+            for rot2 in ORIENTATIONS:
+                beacon2rel = b @ rot2
                 pos2 = beacon1 - beacon2rel
                 t2 = pos2, rot2
                 found = 1
-                valid = True
                 for idx, beacon2 in enumerate(absolute(t2, scanner2)):
-                    if idx == beacon2relidx:
+                    if idx == idx2:
                         continue
-                    if not is_visible(pos1, beacon2):
+                    if idx in toofar:
                         continue
-                    if tuple(beacon2) not in abs1set:
-                        valid = False
+                    if not is_visible(
+                        pos10, pos11, pos12, beacon2[0], beacon2[1], beacon2[2]
+                    ):
+                        toofar.add(idx)
+                        continue
+                    if (beacon2[0], beacon2[1], beacon2[2]) not in abs1set:
                         break
                     found += 1
-                if valid and found >= 8:
-                    return pos2, rot2
+                    if found >= MIN_MATCHES:
+                        return t2
     return None
 
 
-def parse(s: str) -> List[List[Array]]:
-    scanners: List[List[Array]] = []
+def parse(s: str) -> List[Array]:
+    scanners: List[Array] = []
     beacons: List[Array] = []
     for line in s.splitlines():
         if stripped_line := line.strip():
             if stripped_line.startswith("---"):
-                scanners.append(beacons)
+                scanners.append(np.array(beacons))
                 beacons = []
             else:
                 pos = stripped_line.split(",")
                 beacons.append(np.array([int(pos[0]), int(pos[1]), int(pos[2])]))
-    scanners.append(beacons)
+    scanners.append(np.array(beacons))
     return scanners[1:]
 
 
@@ -428,3 +443,7 @@ def test_skasch() -> None:
         )
         == 79
     )
+
+
+if __name__ == "__main__":
+    test_skasch()
