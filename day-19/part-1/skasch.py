@@ -1,4 +1,4 @@
-from typing import List, Optional, Set, Tuple, cast
+from typing import Callable, List, Optional, Set, Tuple, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -182,14 +182,18 @@ DISTANCE = 1000
 MIN_MATCHES = 8
 
 
-def is_visible(
-    pos0: int, pos1: int, pos2: int, beacon0: int, beacon1: int, beacon2: int
-) -> bool:
-    return (
-        -DISTANCE <= pos0 - beacon0 <= DISTANCE
-        and -DISTANCE <= pos1 - beacon1 <= DISTANCE
-        and -DISTANCE <= pos2 - beacon2 <= DISTANCE
-    )
+def gen_is_visible(pos0: int, pos1: int, pos2: int) -> Callable[[int, int, int], bool]:
+    min0 = -DISTANCE + pos0
+    min1 = -DISTANCE + pos1
+    min2 = -DISTANCE + pos2
+    max0 = DISTANCE + pos0
+    max1 = DISTANCE + pos1
+    max2 = DISTANCE + pos2
+
+    def is_visible(b0: int, b1: int, b2: int) -> bool:
+        return min0 <= b0 <= max0 and min1 <= b1 <= max1 and min2 <= b2 <= max2
+
+    return is_visible
 
 
 def absolute(t: Tensor, scanner: Array) -> Array:
@@ -203,30 +207,25 @@ def find_overlap(
     scanner2: Array,
 ) -> Optional[Tensor]:
     pos1, _ = t1
-    pos10, pos11, pos12 = pos1[0], pos1[1], pos1[2]
+    is_visible = gen_is_visible(pos1[0], pos1[1], pos1[2])
     abs1 = list(absolute(t1, scanner1))
     abs1set: Set[Tuple[int, int, int]] = {
         (beacon[0], beacon[1], beacon[2]) for beacon in abs1  # type: ignore
     }
     n_beacons2 = scanner2.shape[0]
     scanner2_rots = [scanner2 @ rot2 for rot2 in ORIENTATIONS]
-    for idx2, b in enumerate(scanner2):
+    for idx2, _ in enumerate(scanner2):
         for beacon1 in abs1:
-            toofar = set()
+            valid_idxs = {idx for idx in range(n_beacons2) if idx != idx2}
             for idx_rot, rot2 in enumerate(ORIENTATIONS):
                 beacon2rel = scanner2_rots[idx_rot][idx2]
                 pos2 = beacon1 - beacon2rel
                 t2 = pos2, rot2
                 found = 1
-                for idx in range(n_beacons2):
-                    if idx in toofar:
-                        continue
-                    if idx == idx2:
-                        continue
+                toofar = set()
+                for idx in valid_idxs:
                     beacon2 = scanner2_rots[idx_rot][idx] + pos2
-                    if not is_visible(
-                        pos10, pos11, pos12, beacon2[0], beacon2[1], beacon2[2]
-                    ):
+                    if not is_visible(beacon2[0], beacon2[1], beacon2[2]):
                         toofar.add(idx)
                         continue
                     if (beacon2[0], beacon2[1], beacon2[2]) not in abs1set:
@@ -234,6 +233,7 @@ def find_overlap(
                     found += 1
                     if found >= MIN_MATCHES:
                         return t2
+                valid_idxs -= toofar
     return None
 
 
