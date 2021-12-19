@@ -50,15 +50,15 @@ area parse(char *s) {
     return area;
 }
 
-bool reach_area(short vx, short vy, area area) {
+bool reach_area(short vx, short vy, area *area) {
     short x, y;
     x = y = 0;
-    while (x <= area.xe && y >= area.ys) {
+    while (x <= area->xe && y >= area->ys) {
         x += vx;
         y += vy;
         vx = vx == 0 ? 0 : vx - 1;
         vy--;
-        if (x >= area.xs && x <= area.xe && y >= area.ys && y <= area.ye) {
+        if (x >= area->xs && x <= area->xe && y >= area->ys && y <= area->ye) {
             return true;
         }
     }
@@ -82,7 +82,7 @@ short run(char* s) {
     short vymax = -1 * area.ys;
     for (short vx = vxmin; vx < vxmax + 1; vx++) {
         for (short vy = vymin; vy < vymax + 1; vy++) {
-            counter += reach_area(vx, vy, area);
+            counter += reach_area(vx, vy, &area);
         }
     }
     return counter;
