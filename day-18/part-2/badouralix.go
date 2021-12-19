@@ -208,13 +208,11 @@ func run(s string) int {
 
 	for i, sn1 := range sns {
 		for _, sn2 := range sns[i+1:] {
-			magnitude := NewSnailfishNumberFromAdd(sn1, sn2).Magnitude()
-			if magnitude > result {
+			if magnitude := NewSnailfishNumberFromAdd(sn1, sn2).Magnitude(); magnitude > result {
 				result = magnitude
 			}
 
-			magnitude = NewSnailfishNumberFromAdd(sn2, sn1).Magnitude()
-			if magnitude > result {
+			if magnitude := NewSnailfishNumberFromAdd(sn2, sn1).Magnitude(); magnitude > result {
 				result = magnitude
 			}
 		}
