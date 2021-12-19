@@ -170,14 +170,19 @@ func (sn *SnailfishNumber) RecSplit() bool {
 
 // Reduce reduces sn as much as possible
 func (sn *SnailfishNumber) Reduce() {
-	// Try to explode sn and if something happened, reduce again
-	if exploded, _, _ := sn.RecExplode(1); exploded {
-		sn.Reduce()
-	}
+	for {
+		// Try to explode sn and if something happened, reduce again
+		if exploded, _, _ := sn.RecExplode(1); exploded {
+			continue
+		}
 
-	// Try to split sn and if something happened, reduce again
-	if sn.RecSplit() {
-		sn.Reduce()
+		// Try to split sn and if something happened, reduce again
+		if sn.RecSplit() {
+			continue
+		}
+
+		// If nothing happened during this loop, sn is fully reduced
+		return
 	}
 }
 
