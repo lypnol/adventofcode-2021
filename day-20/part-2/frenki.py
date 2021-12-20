@@ -2,56 +2,60 @@ from tool.runners.python import SubmissionPy
 
 class FrenkiSubmission(SubmissionPy):
   def run(self, s):
-    d = s.splitlines()
-    p = d[0]
-    L = d[2:]
-    m = len(L)
-    n = len(L[0])
+    data = s.splitlines()
+    algorithm = data[0]
+    image = data[2:]
+    height = len(image)
+    width = len(image[0])
 
-    for i in range(m):
-      L[i] = ".." + L[i] + ".."
+    for i in range(height):
+      image[i] = ".." + image[i] + ".."
 
-    L = ["."*(n + 4)] * 2 + L + ["."*(n + 4)] * 2
+    image = ["."*(width + 4)] * 2 + image + ["."*(width + 4)] * 2
 
     def compute(i,j):
-      a = L[i-1][j-1:j+2]
-      b = L[i][j-1:j+2]
-      c = L[i+1][j-1:j+2]
-      d = a+b+c
-      e = ""
-      for k in d:
+      raw = image[i-1][j-1:j+2] + image[i][j-1:j+2] + image[i+1][j-1:j+2]
+      computed = ""
+      for k in raw:
         if k == "#":
-          e += "1"
+          computed += "1"
         else:
-          e += "0"
-      return p[int(e, 2)]
+          computed += "0"
 
-    for k in range(49):
-      if k % 2 == 1 or p[0] == ".":
-        L2 = ["."*(n+2*k+6)]*2
-      else:
-        L2 = ["#"*(n+2*k+6)]*2
-      for i in range(1, m + 3 + 2*k):
-        if k % 2 == 1 or p[0] == ".":
-          v = ".."
-        else:
-          v = "##"
-        for j in range(1, n + 3 + 2*k):
-          v += compute(i,j)
-        if k % 2 == 1 or p[0] == ".":
-          v += ".."
-        else:
-          v += "##"
-        L2.append(v)
-      if k % 2 == 1 or p[0] == ".":
-        L2 += ["."*(n+2*k+6)]*2
-      else:
-        L2 += ["#"*(n+2*k+6)]*2
-      L = L2
+      return algorithm[int(computed, 2)]
 
-    r = 0
-    for i in range(1, m + 101):
-      for j in range(1, n + 101):
+    for counter in range(49):
+      if counter % 2 == 1 or algorithm[0] == ".":
+        temp = ["." * (width + 2 * counter + 6)] * 2
+      else:
+        temp = ["#" * (width + 2 * counter + 6)] * 2
+
+      for i in range(1, height + 3 + 2 * counter):
+        if counter % 2 == 1 or algorithm[0] == ".":
+          line = ".."
+        else:
+          line = "##"
+
+        for j in range(1, width + 3 + 2 * counter):
+          line += compute(i,j)
+
+        if counter % 2 == 1 or algorithm[0] == ".":
+          line += ".."
+        else:
+          line += "##"
+
+        temp.append(line)
+
+      if counter % 2 == 1 or algorithm[0] == ".":
+        temp += ["." * (width + 2 * counter + 6)] * 2
+      else:
+        temp += ["#" * (width + 2 * counter + 6)] * 2
+
+      image = temp
+
+    result = 0
+    for i in range(1, height + 101):
+      for j in range(1, width + 101):
         if compute(i,j) == "#":
-          r += 1
-    return r
+          result += 1
+    return result
