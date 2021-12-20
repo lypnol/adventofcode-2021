@@ -211,8 +211,9 @@ func IdentifyScanners(s string) []*Scanner {
 	}
 
 	identifiedScanners := make([]*Scanner, 0, len(scanners))
-	scanners[0].Identified = true
 	identifiedScanners = append(identifiedScanners, scanners[0])
+	scanners[0].Identified = true
+	negativeCache := make(map[*Scanner]map[*Scanner]struct{}, len(scanners))
 	for len(identifiedScanners) != len(scanners) {
 	loop:
 		for _, scanner := range scanners[1:] {
@@ -220,10 +221,19 @@ func IdentifyScanners(s string) []*Scanner {
 				continue
 			}
 
+			if _, ok := negativeCache[scanner]; !ok {
+				negativeCache[scanner] = make(map[*Scanner]struct{}, len(scanners))
+			}
+
 			// Loop over all identified scanners and try to find a neighbor with at least 12 beacons in common
 			for _, identifiedScanner := range identifiedScanners {
+				if _, ok := negativeCache[scanner][identifiedScanner]; ok {
+					continue
+				}
+
 				// Try all rotations and all translations
 				for _, rotation := range rotations {
+					// Update scanner.BeaconsRelativePositionWithRotation to match the current rotation
 					scanner.UpdateOrientationAndPosition(rotation, NewPositionFromCoordinates(0, 0, 0))
 
 					// Bruteforce all possible translations from one scanner to the other with at least one common beacon
@@ -240,6 +250,9 @@ func IdentifyScanners(s string) []*Scanner {
 						}
 					}
 				}
+
+				// Remember that scanner and identifiedScanner are not neighbors
+				negativeCache[scanner][identifiedScanner] = struct{}{}
 			}
 		}
 	}
