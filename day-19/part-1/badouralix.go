@@ -119,12 +119,9 @@ func MultiplyQuaternions(q1, q2 Quaternion) Quaternion {
 type Scanner struct {
 	// BeaconsAbsolutePosition contains the positions of the beacons relative to scanner `0`
 	BeaconsAbsolutePosition map[Position]struct{}
-	// BeaconsRelativePositionWithRotation contains the positions of the beacons relative to the current scanner
-	// with the rotation applied to the scanner, but without the translation applied
-	BeaconsRelativePositionWithRotation []Position
-	// BeaconsRelativePositionWithRotation contains the positions of the beacons relative to the current scanner
-	// without the rotation applied to the scanner : the positions are essentially what is written in the input file
-	BeaconsRelativePositionWithoutRotation []Position
+	// BeaconsRelativePosition contains the positions of the beacons relative to the current scanner
+	// along any rotation possible, including the identity rotation
+	BeaconsRelativePosition map[Quaternion][]Position
 
 	Identified  bool
 	Orientation Quaternion
@@ -133,9 +130,8 @@ type Scanner struct {
 
 func NewScanner() Scanner {
 	return Scanner{
-		BeaconsAbsolutePosition:                make(map[Position]struct{}),
-		BeaconsRelativePositionWithRotation:    make([]Position, 0),
-		BeaconsRelativePositionWithoutRotation: make([]Position, 0),
+		BeaconsAbsolutePosition: make(map[Position]struct{}),
+		BeaconsRelativePosition: map[Quaternion][]Position{NewQuaternionFromCoordinates(1, 0, 0, 0): make([]Position, 0)},
 
 		Identified:  false,
 		Orientation: NewQuaternionFromCoordinates(1, 0, 0, 0),
@@ -147,22 +143,24 @@ func (sc *Scanner) AddBeacon(x, y, z int) {
 	beacon := NewPositionFromCoordinates(x, y, z)
 
 	sc.BeaconsAbsolutePosition[beacon] = struct{}{}
-	sc.BeaconsRelativePositionWithRotation = append(sc.BeaconsRelativePositionWithRotation, beacon)
-	sc.BeaconsRelativePositionWithoutRotation = append(sc.BeaconsRelativePositionWithoutRotation, beacon)
+	sc.BeaconsRelativePosition[sc.Orientation] = append(sc.BeaconsRelativePosition[sc.Orientation], beacon)
 }
 
 func (sc *Scanner) UpdateOrientationAndPosition(q Quaternion, p Position) {
 	sc.Orientation = q
 	sc.Position = p
 
-	sc.BeaconsAbsolutePosition = make(map[Position]struct{}, len(sc.BeaconsRelativePositionWithoutRotation))
-	sc.BeaconsRelativePositionWithRotation = make([]Position, len(sc.BeaconsRelativePositionWithoutRotation))
-	for idx, beacon := range sc.BeaconsRelativePositionWithoutRotation {
-		beaconWithoutTranslation := beacon.Rotate(sc.Orientation)
-		beaconWithTranslation := beaconWithoutTranslation.Translate(sc.Position)
+	// Cache computation of rotations
+	if _, ok := sc.BeaconsRelativePosition[sc.Orientation]; !ok {
+		sc.BeaconsRelativePosition[sc.Orientation] = make([]Position, len(sc.BeaconsRelativePosition[NewQuaternionFromCoordinates(1, 0, 0, 0)]))
+		for idx, beacon := range sc.BeaconsRelativePosition[NewQuaternionFromCoordinates(1, 0, 0, 0)] {
+			sc.BeaconsRelativePosition[sc.Orientation][idx] = beacon.Rotate(sc.Orientation)
+		}
+	}
 
-		sc.BeaconsAbsolutePosition[beaconWithTranslation] = struct{}{}
-		sc.BeaconsRelativePositionWithRotation[idx] = beaconWithoutTranslation
+	sc.BeaconsAbsolutePosition = make(map[Position]struct{}, len(sc.BeaconsRelativePosition[sc.Orientation]))
+	for _, beacon := range sc.BeaconsRelativePosition[sc.Orientation] {
+		sc.BeaconsAbsolutePosition[beacon.Translate(sc.Position)] = struct{}{}
 	}
 }
 
@@ -237,7 +235,7 @@ func IdentifyScanners(s string) []*Scanner {
 					scanner.UpdateOrientationAndPosition(rotation, NewPositionFromCoordinates(0, 0, 0))
 
 					// Bruteforce all possible translations from one scanner to the other with at least one common beacon
-					for _, source := range scanner.BeaconsRelativePositionWithRotation {
+					for _, source := range scanner.BeaconsRelativePosition[scanner.Orientation] {
 						for destination := range identifiedScanner.BeaconsAbsolutePosition {
 							translation := SubstractPositions(destination, source)
 							scanner.UpdateOrientationAndPosition(rotation, translation)
