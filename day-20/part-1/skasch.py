@@ -1,0 +1,140 @@
+import functools
+from typing import List, Tuple
+
+import numpy as np
+import numpy.typing as npt
+from tool.runners.python import SubmissionPy
+
+Array = npt.NDArray[np.int_]
+
+
+BASE = 64
+FACTORS = np.array([[256, 128, 64], [32, 16, 8], [4, 2, 1]])
+LAST_FACTORS = np.array([4, 2, 1])
+
+
+def encode(image: Array) -> int:
+    return (image * FACTORS).sum()
+
+
+PAD = 2
+
+
+def pad(image: Array, border: int) -> Array:
+    pad_top = 1 if any(v != border for v in image[PAD - 1, :]) else 0
+    pad_bot = 1 if any(v != border for v in image[-PAD, :]) else 0
+    pad_left = 1 if any(v != border for v in image[:, PAD - 1]) else 0
+    pad_right = 1 if any(v != border for v in image[:, -PAD]) else 0
+    return np.pad(
+        image, ((pad_top, pad_bot), (pad_left, pad_right)), constant_values=border
+    )
+
+
+def parse(s: str) -> Tuple[List[int], Array]:
+    lines_iter = iter(s.splitlines())
+    algorithm_str = next(lines_iter)
+    algorithm = [1 if c == "#" else 0 for c in algorithm_str.strip()]
+    image = []
+    for line in lines_iter:
+        if stripped_line := line.strip():
+            image.append([1 if c == "#" else 0 for c in stripped_line])
+    return algorithm, np.array(image)
+
+
+TIMES = 2
+
+
+class SkaschSubmission(SubmissionPy):
+    @functools.lru_cache(None)
+    def encode(
+        self,
+        im00: int,
+        im01: int,
+        im02: int,
+        im10: int,
+        im11: int,
+        im12: int,
+        im20: int,
+        im21: int,
+        im22: int,
+    ) -> int:
+        return self.algorithm[
+            256 * im00
+            + 128 * im01
+            + 64 * im02
+            + 32 * im10
+            + 16 * im11
+            + 8 * im12
+            + 4 * im20
+            + 2 * im21
+            + im22
+        ]
+
+    def conv(self, image: Array, border: int) -> Tuple[Array, int]:
+        new_border = self.algorithm[0] if border == 0 else self.algorithm[-1]
+        res = np.full_like(image, new_border)
+        for c in range(image.shape[1] - 2):
+            # val = encode(image[:3, c : c + 3])
+            val = self.encode(
+                image[0, c],
+                image[0, c + 1],
+                image[0, c + 2],
+                image[1, c],
+                image[1, c + 1],
+                image[1, c + 2],
+                image[2, c],
+                image[2, c + 1],
+                image[2, c + 2],
+            )
+            res[1, c + 1] = val
+            for r in range(3, image.shape[0]):
+                # val = (val % BASE) << 3
+                # val += (image[r, c : c + 3] * LAST_FACTORS).sum()
+                # val = encode(image[r - 2 : r + 1, c : c + 3])
+                val = self.encode(
+                    image[r - 2, c],
+                    image[r - 2, c + 1],
+                    image[r - 2, c + 2],
+                    image[r - 1, c],
+                    image[r - 1, c + 1],
+                    image[r - 1, c + 2],
+                    image[r, c],
+                    image[r, c + 1],
+                    image[r, c + 2],
+                )
+                res[r - 1, c + 1] = val
+        return res, new_border
+
+    def run(self, s: str) -> int:
+        """
+        :param s: input in string format
+        :return: solution flag
+        """
+        # Your code goes here
+        self.algorithm, image = parse(s)
+        border = 0
+        image = pad(image, border)
+        for _ in range(TIMES):
+            image = pad(image, border)
+            image, border = self.conv(image, border)
+        return image.sum()
+
+
+def test_skasch() -> None:
+    """
+    Run `python -m pytest ./day-20/part-1/skasch.py` to test the submission.
+    """
+    assert (
+        SkaschSubmission().run(
+            """
+..#.#..#####.#.#.#.###.##.....###.##.#..###.####..#####..#....#..#..##..###..######.###...####..#..#####..##..#.#####...##.#.#..#.##..#.#......#.###.######.###.####...#.##.##..#..#..#####.....#.#....###..#.##......#.....#..#..#..##..#...##.######.####.####.#.#...#.......#..#.#.#...####.##.#......#..#...##.#.##..#...##.#.##..###.#......#.#.......#.#.#.####.###.##...#.....####.#..#..#.##.#....##..#.####....##...##..#...#......#.#.......#.......##..####..#...#.#.#...##..#.#..###..#####........#..####......#..#
+
+#..#.
+#....
+##..#
+..#..
+..###
+""".strip()
+        )
+        == 35
+    )
