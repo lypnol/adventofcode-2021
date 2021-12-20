@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+const NumberOfBeaconsSharedBetweenNeighbors = 12
+
 type Position struct {
 	X int
 	Y int
@@ -24,7 +26,7 @@ func NewPositionFromQuaternion(q Quaternion) Position {
 		panic("tried to convert non-vector quaternion to position")
 	}
 
-	return Position{int(q.X), int(q.Y), int(q.Z)}
+	return NewPositionFromCoordinates(int(q.X), int(q.Y), int(q.Z))
 }
 
 func (p Position) Norm1() (norm int) {
@@ -126,6 +128,7 @@ type Scanner struct {
 	Identified  bool
 	Orientation Quaternion
 	Position    Position
+	Size        int
 }
 
 func NewScanner() Scanner {
@@ -136,6 +139,7 @@ func NewScanner() Scanner {
 		Identified:  false,
 		Orientation: NewQuaternionFromCoordinates(1, 0, 0, 0),
 		Position:    NewPositionFromCoordinates(0, 0, 0),
+		Size:        0,
 	}
 }
 
@@ -144,33 +148,43 @@ func (sc *Scanner) AddBeacon(x, y, z int) {
 
 	sc.BeaconsAbsolutePosition[beacon] = struct{}{}
 	sc.BeaconsRelativePosition[sc.Orientation] = append(sc.BeaconsRelativePosition[sc.Orientation], beacon)
+	sc.Size++
 }
 
-func (sc *Scanner) UpdateOrientationAndPosition(q Quaternion, p Position) {
+// UpdateOrientationAndPositionWithFailFast rotates sc by q, and translates it by p
+// If target is not nil, it returns as soon as we know sc has not enough beacons in common with it
+func (sc *Scanner) UpdateOrientationAndPositionWithFailFast(q Quaternion, p Position, target *map[Position]struct{}) bool {
 	sc.Orientation = q
 	sc.Position = p
 
 	// Cache computation of rotations
 	if _, ok := sc.BeaconsRelativePosition[sc.Orientation]; !ok {
-		sc.BeaconsRelativePosition[sc.Orientation] = make([]Position, len(sc.BeaconsRelativePosition[NewQuaternionFromCoordinates(1, 0, 0, 0)]))
+		sc.BeaconsRelativePosition[sc.Orientation] = make([]Position, sc.Size)
 		for idx, beacon := range sc.BeaconsRelativePosition[NewQuaternionFromCoordinates(1, 0, 0, 0)] {
 			sc.BeaconsRelativePosition[sc.Orientation][idx] = beacon.Rotate(sc.Orientation)
 		}
 	}
 
-	sc.BeaconsAbsolutePosition = make(map[Position]struct{}, len(sc.BeaconsRelativePosition[sc.Orientation]))
-	for _, beacon := range sc.BeaconsRelativePosition[sc.Orientation] {
-		sc.BeaconsAbsolutePosition[beacon.Translate(sc.Position)] = struct{}{}
-	}
-}
+	countCommonBeacons := 0
+	sc.BeaconsAbsolutePosition = make(map[Position]struct{}, sc.Size)
+	for idx, beacon := range sc.BeaconsRelativePosition[sc.Orientation] {
+		translated := beacon.Translate(sc.Position)
+		sc.BeaconsAbsolutePosition[translated] = struct{}{}
 
-func CountCommonBeacons(b1, b2 map[Position]struct{}) (count int) {
-	for beacon := range b1 {
-		if _, ok := b2[beacon]; ok {
-			count++
+		if target != nil {
+			if _, ok := (*target)[translated]; ok {
+				countCommonBeacons++
+			}
+
+			// Careful we cannot return true yet even if countCommonBeacons >= 12
+			// because in this case sc.BeaconsAbsolutePosition needs to hold all beacons
+			if sc.Size-idx-1+countCommonBeacons < NumberOfBeaconsSharedBetweenNeighbors {
+				return false
+			}
 		}
 	}
-	return count
+
+	return true
 }
 
 func IdentifyScanners(s string) []*Scanner {
@@ -232,15 +246,13 @@ func IdentifyScanners(s string) []*Scanner {
 				// Try all rotations and all translations
 				for _, rotation := range rotations {
 					// Update scanner.BeaconsRelativePositionWithRotation to match the current rotation
-					scanner.UpdateOrientationAndPosition(rotation, NewPositionFromCoordinates(0, 0, 0))
+					scanner.UpdateOrientationAndPositionWithFailFast(rotation, NewPositionFromCoordinates(0, 0, 0), nil)
 
 					// Bruteforce all possible translations from one scanner to the other with at least one common beacon
 					for _, source := range scanner.BeaconsRelativePosition[scanner.Orientation] {
 						for destination := range identifiedScanner.BeaconsAbsolutePosition {
 							translation := SubstractPositions(destination, source)
-							scanner.UpdateOrientationAndPosition(rotation, translation)
-
-							if CountCommonBeacons(scanner.BeaconsAbsolutePosition, identifiedScanner.BeaconsAbsolutePosition) >= 12 {
+							if scanner.UpdateOrientationAndPositionWithFailFast(rotation, translation, &identifiedScanner.BeaconsAbsolutePosition) {
 								scanner.Identified = true
 								identifiedScanners = append(identifiedScanners, scanner)
 								break loop
@@ -275,6 +287,14 @@ func run(s string) int {
 func main() {
 	// Uncomment this line to disable garbage collection
 	// debug.SetGCPercent(-1)
+
+	// defer profile.Start(profile.CPUProfile).Stop()
+	// defer profile.Start(profile.GoroutineProfile).Stop()
+	// defer profile.Start(profile.BlockProfile).Stop()
+	// defer profile.Start(profile.ThreadcreationProfile).Stop()
+	// defer profile.Start(profile.MemProfileHeap).Stop()
+	// defer profile.Start(profile.MemProfileAllocs).Stop()
+	// defer profile.Start(profile.MutexProfile).Stop()
 
 	var input []byte
 	var err error
