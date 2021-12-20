@@ -30,25 +30,25 @@ class FrenkiSubmission(SubmissionPy):
 
     for k in range(49):
       if k % 2 == 1 or p[0] == ".":
-        L2 = [a1]
+        L2 = [a1 for _ in range(49 - k)]
       else:
-        L2 = [a2]
-      for i in range(1, m + 101):
+        L2 = [a2 for _ in range(49 - k)]
+      for i in range(49 - k, m + 53 + k):
         if k % 2 == 1 or p[0] == ".":
-          v = "."
+          v = "."*(49-k)
         else:
-          v = "#"
-        for j in range(1, n + 101):
+          v = "#"*(49-k)
+        for j in range(49 - k, n + 53 + k):
           v += compute(i,j)
         if k % 2 == 1 or p[0] == ".":
-          v += "."
+          v += "."*(49-k)
         else:
-          v += "#"
+          v += "#"*(49-k)
         L2.append(v)
       if k % 2 == 1 or p[0] == ".":
-        L2 += [a1]
+        L2 += [a1 for _ in range(49 - k)]
       else:
-        L2 += [a2]
+        L2 += [a2 for _ in range(49 - k)]
       L = L2
 
     r = 0
