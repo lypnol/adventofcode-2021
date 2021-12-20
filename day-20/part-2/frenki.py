@@ -7,13 +7,11 @@ class FrenkiSubmission(SubmissionPy):
     L = d[2:]
     m = len(L)
     n = len(L[0])
-    a1 = "."*(102 + n)
-    a2 = "#"*(102 + n)
 
     for i in range(m):
-      L[i] = "."*51 + L[i] + "."*51
+      L[i] = ".." + L[i] + ".."
 
-    L = [a1 for _ in range(51)] + L + [a1 for _ in range(51)]
+    L = ["."*(n + 4)] * 2 + L + ["."*(n + 4)] * 2
 
     def compute(i,j):
       a = L[i-1][j-1:j+2]
@@ -30,25 +28,25 @@ class FrenkiSubmission(SubmissionPy):
 
     for k in range(49):
       if k % 2 == 1 or p[0] == ".":
-        L2 = [a1 for _ in range(49 - k)]
+        L2 = ["."*(n+2*k+6)]*2
       else:
-        L2 = [a2 for _ in range(49 - k)]
-      for i in range(49 - k, m + 53 + k):
+        L2 = ["#"*(n+2*k+6)]*2
+      for i in range(1, m + 3 + 2*k):
         if k % 2 == 1 or p[0] == ".":
-          v = "."*(49-k)
+          v = ".."
         else:
-          v = "#"*(49-k)
-        for j in range(49 - k, n + 53 + k):
+          v = "##"
+        for j in range(1, n + 3 + 2*k):
           v += compute(i,j)
         if k % 2 == 1 or p[0] == ".":
-          v += "."*(49-k)
+          v += ".."
         else:
-          v += "#"*(49-k)
+          v += "##"
         L2.append(v)
       if k % 2 == 1 or p[0] == ".":
-        L2 += [a1 for _ in range(49 - k)]
+        L2 += ["."*(n+2*k+6)]*2
       else:
-        L2 += [a2 for _ in range(49 - k)]
+        L2 += ["#"*(n+2*k+6)]*2
       L = L2
 
     r = 0
