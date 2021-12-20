@@ -10,9 +10,10 @@ import (
 
 const iterations = 50
 
-type Point struct {
-	I int
-	J int
+type Point int
+
+func NewPoint(i, j int) Point {
+	return Point(i*1_000 + j)
 }
 
 func run(s string) int {
@@ -29,7 +30,7 @@ func run(s string) int {
 	for i, line := range strings.Split(split[1], "\n") {
 		for j, pixel := range line {
 			if pixel == '#' {
-				image[Point{i, j}] = struct{}{}
+				image[NewPoint(i, j)] = struct{}{}
 			}
 		}
 	}
@@ -53,7 +54,7 @@ func run(s string) int {
 					for dj := -1; dj <= 1; dj++ {
 						value *= 2
 
-						if _, ok := image[Point{i - 1 + di, j - 1 + dj}]; ok {
+						if _, ok := image[NewPoint(i-1+di, j-1+dj)]; ok {
 							value += 1
 							continue
 						}
@@ -77,7 +78,7 @@ func run(s string) int {
 				}
 
 				if algorithm[value] {
-					new[Point{i, j}] = struct{}{}
+					new[NewPoint(i, j)] = struct{}{}
 				}
 			}
 		}
