@@ -73,36 +73,20 @@ class SkaschSubmission(SubmissionPy):
     def conv(self, image: Array, border: int) -> Tuple[Array, int]:
         new_border = self.algorithm[0] if border == 0 else self.algorithm[-1]
         res = np.full_like(image, new_border)
-        for c in range(image.shape[1] - 2):
-            # val = encode(image[:3, c : c + 3])
-            val = self.encode(
-                image[0, c],
-                image[0, c + 1],
-                image[0, c + 2],
-                image[1, c],
-                image[1, c + 1],
-                image[1, c + 2],
-                image[2, c],
-                image[2, c + 1],
-                image[2, c + 2],
-            )
-            res[1, c + 1] = val
-            for r in range(3, image.shape[0]):
-                # val = (val % BASE) << 3
-                # val += (image[r, c : c + 3] * LAST_FACTORS).sum()
-                # val = encode(image[r - 2 : r + 1, c : c + 3])
-                val = self.encode(
-                    image[r - 2, c],
-                    image[r - 2, c + 1],
-                    image[r - 2, c + 2],
+        for c in range(1, image.shape[1] - 1):
+            for r in range(1, image.shape[0] - 1):
+                # val = encode(image[:3, c : c + 3])
+                res[r, c] = self.encode(
+                    image[r - 1, c - 1],
                     image[r - 1, c],
                     image[r - 1, c + 1],
-                    image[r - 1, c + 2],
+                    image[r, c - 1],
                     image[r, c],
                     image[r, c + 1],
-                    image[r, c + 2],
+                    image[r + 1, c - 1],
+                    image[r + 1, c],
+                    image[r + 1, c + 1],
                 )
-                res[r - 1, c + 1] = val
         return res, new_border
 
     def run(self, s: str) -> int:
@@ -111,6 +95,7 @@ class SkaschSubmission(SubmissionPy):
         :return: solution flag
         """
         # Your code goes here
+        self.encode.cache_clear()
         self.algorithm, image = parse(s)
         border = 0
         image = pad(image, border)
