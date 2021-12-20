@@ -7,24 +7,14 @@ from tool.runners.python import SubmissionPy
 
 Array = npt.NDArray[np.int_]
 
-
-BASE = 64
-FACTORS = np.array([[256, 128, 64], [32, 16, 8], [4, 2, 1]])
-LAST_FACTORS = np.array([4, 2, 1])
-
-
-def encode(image: Array) -> int:
-    return (image * FACTORS).sum()
-
-
-PAD = 2
+PAD_DEPTH = 2
 
 
 def pad(image: Array, border: int) -> Array:
-    pad_top = 1 if any(v != border for v in image[PAD - 1, :]) else 0
-    pad_bot = 1 if any(v != border for v in image[-PAD, :]) else 0
-    pad_left = 1 if any(v != border for v in image[:, PAD - 1]) else 0
-    pad_right = 1 if any(v != border for v in image[:, -PAD]) else 0
+    pad_top = 1 if any(v != border for v in image[PAD_DEPTH - 1, :]) else 0
+    pad_bot = 1 if any(v != border for v in image[-PAD_DEPTH, :]) else 0
+    pad_left = 1 if any(v != border for v in image[:, PAD_DEPTH - 1]) else 0
+    pad_right = 1 if any(v != border for v in image[:, -PAD_DEPTH]) else 0
     return np.pad(
         image, ((pad_top, pad_bot), (pad_left, pad_right)), constant_values=border
     )
@@ -75,7 +65,6 @@ class SkaschSubmission(SubmissionPy):
         res = np.full_like(image, new_border)
         for c in range(1, image.shape[1] - 1):
             for r in range(1, image.shape[0] - 1):
-                # val = encode(image[:3, c : c + 3])
                 res[r, c] = self.encode(
                     image[r - 1, c - 1],
                     image[r - 1, c],
@@ -121,5 +110,5 @@ def test_skasch() -> None:
 ..###
 """.strip()
         )
-        == 35
+        == 3351
     )
