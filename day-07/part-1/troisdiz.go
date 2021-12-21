@@ -58,7 +58,7 @@ func puzzle(puzzle Puzzle) int {
 			cost = candidate
 		}
 	}
-	fmt.Printf("Target pos : %d at cost %d\n", puzzle.positions[middle], cost)
+	// fmt.Printf("Target pos : %d at cost %d\n", puzzle.positions[middle], cost)
 	return cost
 }
 
