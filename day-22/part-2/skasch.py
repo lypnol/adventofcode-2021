@@ -1,20 +1,10 @@
+import collections
 import re
-from typing import Iterable, List, NamedTuple, Optional, Tuple
+from typing import DefaultDict, Iterable, List, Optional, Tuple, Union, cast
 
 from tool.runners.python import SubmissionPy
 
-
-class Cube(NamedTuple):
-    x0: int
-    x1: int
-    y0: int
-    y1: int
-    z0: int
-    z1: int
-
-    def __repr__(self) -> str:
-        return f"Cube({self.x0}..{self.x1},{self.y0}..{self.y1},{self.z0}..{self.z1})"
-
+Cube = Tuple[int, int, int, int, int, int]
 
 REGEX = re.compile(
     r"(on|off) "
@@ -25,7 +15,7 @@ REGEX = re.compile(
 def parse(s: str) -> Iterable[Tuple[bool, Cube]]:
     for line in s.splitlines():
         if (m := REGEX.match(line.strip())) is not None:
-            yield m.group(1) == "on", Cube(
+            yield m.group(1) == "on", (
                 int(m.group(2)),
                 int(m.group(3)),
                 int(m.group(4)),
@@ -36,20 +26,32 @@ def parse(s: str) -> Iterable[Tuple[bool, Cube]]:
 
 
 def volume(cube: Cube) -> int:
-    return (cube.x1 - cube.x0 + 1) * (cube.y1 - cube.y0 + 1) * (cube.z1 - cube.z0 + 1)
+    return (cube[1] - cube[0] + 1) * (cube[3] - cube[2] + 1) * (cube[5] - cube[4] + 1)
 
 
 def intersect(cube1: Cube, cube2: Cube) -> Optional[Cube]:
-    (_, xl1), (xh0, xh1) = sorted([(cube1.x0, cube1.x1), (cube2.x0, cube2.x1)])
+    xl1, xh0, xh1 = (
+        (cube1[1], cube2[0], cube2[1])
+        if cube1[0] <= cube2[0]
+        else (cube2[1], cube1[0], cube1[1])
+    )
     if xl1 < xh0:
         return None
-    (_, yl1), (yh0, yh1) = sorted([(cube1.y0, cube1.y1), (cube2.y0, cube2.y1)])
+    yl1, yh0, yh1 = (
+        (cube1[3], cube2[2], cube2[3])
+        if cube1[2] <= cube2[2]
+        else (cube2[3], cube1[2], cube1[3])
+    )
     if yl1 < yh0:
         return None
-    (_, zl1), (zh0, zh1) = sorted([(cube1.z0, cube1.z1), (cube2.z0, cube2.z1)])
+    zl1, zh0, zh1 = (
+        (cube1[5], cube2[4], cube2[5])
+        if cube1[4] <= cube2[4]
+        else (cube2[5], cube1[4], cube1[5])
+    )
     if zl1 < zh0:
         return None
-    return Cube(xh0, min(xl1, xh1), yh0, min(yl1, yh1), zh0, min(zl1, zh1))
+    return (xh0, min(xl1, xh1), yh0, min(yl1, yh1), zh0, min(zl1, zh1))
 
 
 class SkaschSubmission(SubmissionPy):
@@ -59,14 +61,24 @@ class SkaschSubmission(SubmissionPy):
         :return: solution flag
         """
         # Your code goes here
-        cubes: List[Tuple[Cube, int]] = []
+        cubes: List[List[Union[Cube, int]]] = []
         for on, cube in parse(s):
-            new_cubes: List[Tuple[Cube, int]] = [(cube, 1)] if on else []
-            for prev_cube, val in cubes:
+            new_cubes: List[List[Union[Cube, int]]] = [[cube, 1]] if on else []
+            update_vals: DefaultDict[int, int] = collections.defaultdict(int)
+            for idx, (prev_cube, val) in enumerate(cubes):
+                prev_cube = cast(Cube, prev_cube)
+                val = cast(int, val)
                 if (intersection := intersect(cube, prev_cube)) is not None:
-                    new_cubes.append((intersection, -val))
+                    if intersection == prev_cube:
+                        update_vals[idx] -= val
+                    elif on and intersection == cube:
+                        new_cubes[0][1] -= val  # type: ignore
+                    else:
+                        new_cubes.append([intersection, -val])
+            for idx, dval in update_vals.items():
+                cubes[idx][1] += dval  # type: ignore
             cubes.extend(new_cubes)
-        return sum(val * volume(cube) for cube, val in cubes)
+        return sum(val * volume(cube) for cube, val in cubes)  # type: ignore
 
 
 def test_skasch() -> None:
