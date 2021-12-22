@@ -1,6 +1,6 @@
-import collections
+import dataclasses as dc
 import re
-from typing import DefaultDict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Iterable, List, Optional, Tuple
 
 from tool.runners.python import SubmissionPy
 
@@ -54,6 +54,12 @@ def intersect(cube1: Cube, cube2: Cube) -> Optional[Cube]:
     return (xh0, min(xl1, xh1), yh0, min(yl1, yh1), zh0, min(zl1, zh1))
 
 
+@dc.dataclass
+class ValuedCube:
+    cube: Cube
+    val: int
+
+
 class SkaschSubmission(SubmissionPy):
     def run(self, s: str) -> int:
         """
@@ -61,24 +67,22 @@ class SkaschSubmission(SubmissionPy):
         :return: solution flag
         """
         # Your code goes here
-        cubes: List[List[Union[Cube, int]]] = []
+        cubes: List[ValuedCube] = []
         for on, cube in parse(s):
-            new_cubes: List[List[Union[Cube, int]]] = [[cube, 1]] if on else []
-            update_vals: DefaultDict[int, int] = collections.defaultdict(int)
-            for idx, (prev_cube, val) in enumerate(cubes):
-                prev_cube = cast(Cube, prev_cube)
-                val = cast(int, val)
-                if (intersection := intersect(cube, prev_cube)) is not None:
-                    if intersection == prev_cube:
-                        update_vals[idx] -= val
+            new_cubes: List[ValuedCube] = [ValuedCube(cube, 1)] if on else []
+            remove_cubes = []
+            for idx, valued_cube in enumerate(cubes):
+                if (intersection := intersect(cube, valued_cube.cube)) is not None:
+                    if intersection == valued_cube.cube:
+                        remove_cubes.append(idx)
                     elif on and intersection == cube:
-                        new_cubes[0][1] -= val  # type: ignore
+                        new_cubes[0].val -= valued_cube.val
                     else:
-                        new_cubes.append([intersection, -val])
-            for idx, dval in update_vals.items():
-                cubes[idx][1] += dval  # type: ignore
+                        new_cubes.append(ValuedCube(intersection, -valued_cube.val))
+            for idx in reversed(remove_cubes):
+                del cubes[idx]
             cubes.extend(new_cubes)
-        return sum(val * volume(cube) for cube, val in cubes)  # type: ignore
+        return sum(valued_cube.val * volume(valued_cube.cube) for valued_cube in cubes)
 
 
 def test_skasch() -> None:
