@@ -15,12 +15,54 @@ type Cuboid struct {
 	Zmin, Zmax int
 }
 
+// Volume returns the number of cubes that are turned on in the cuboid
 func (c Cuboid) Volume() int {
 	return (c.Xmax - c.Xmin + 1) * (c.Ymax - c.Ymin + 1) * (c.Zmax - c.Zmin + 1)
 }
 
-// SplitCuboidAroundOtherCuboid returns a list of cuboids such that for each cube in c1 and not c2
-// there is one and only one cuboid containing it.
+type Reactor struct {
+	// Id of the active list of cuboids in the reactor
+	CuboidsID int
+
+	// Active list of cuboids, and another pre-allocated list of cuboids ready for update
+	C0 []Cuboid
+	C1 []Cuboid
+}
+
+// NewReactor returns an empty reactor with pre-allocated list of cuboids
+func NewReactor() Reactor {
+	return Reactor{
+		CuboidsID: 0,
+
+		// A reactor contains at most 4096 cuboids
+		C0: make([]Cuboid, 0, 4096),
+		C1: make([]Cuboid, 0, 4096),
+	}
+}
+
+// GetCurrentCuboids returns the active list of cuboids
+func (r Reactor) GetCurrentCuboids() []Cuboid {
+	if r.CuboidsID == 0 {
+		return r.C0
+	}
+
+	return r.C1
+}
+
+// GetOtherCuboidsForUpdate returns an empty list of cuboids ready to be filled with a new version
+// of the list of cuboids of the reactor
+func (r *Reactor) GetOtherCuboidsForUpdate() []Cuboid {
+	if r.CuboidsID == 0 {
+		r.C1 = r.C1[:0]
+		return r.C1
+	}
+
+	r.C0 = r.C0[:0]
+	return r.C0
+}
+
+// SplitCuboidsAroundGivenCuboid returns a list of cuboids such that for all cuboid c1, each cube
+// in c1 and not c2 there is one and only one cuboid containing it
 //
 //      ┌────────────────────────────────────────────────────────┐
 //      │                                                        │
@@ -34,97 +76,101 @@ func (c Cuboid) Volume() int {
 //      │        └──────────┘                     └──────────┘   │
 //      │                                                        │
 //      └────────────────────────────────────────────────────────┘
-//
-func SplitCuboidAroundOtherCuboid(c1, c2 Cuboid) (cuboids []Cuboid) {
-	xmin := c1.Xmin
-	xmax := c1.Xmax
-	ymin := c1.Ymin
-	ymax := c1.Ymax
-	zmin := c1.Zmin
-	zmax := c1.Zmax
+func (r Reactor) SplitCuboidsAroundGivenCuboid(cuboids []Cuboid, c2 Cuboid) []Cuboid {
+	for _, c1 := range r.GetCurrentCuboids() {
+		xmin := c1.Xmin
+		xmax := c1.Xmax
+		ymin := c1.Ymin
+		ymax := c1.Ymax
+		zmin := c1.Zmin
+		zmax := c1.Zmax
 
-	// When c1 is completely left or right or below or above or behind or in front of c1, return c1
-	if c1.Xmax < c2.Xmin || c1.Xmin > c2.Xmax || c1.Ymax < c2.Ymin || c1.Ymin > c2.Ymax || c1.Zmax < c2.Zmin || c1.Zmin > c2.Zmax {
-		cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
-		return cuboids
-	}
+		// When c1 is completely left or right or below or above or behind or in front of c1, return c1
+		if c1.Xmax < c2.Xmin || c1.Xmin > c2.Xmax || c1.Ymax < c2.Ymin || c1.Ymin > c2.Ymax || c1.Zmax < c2.Zmin || c1.Zmin > c2.Zmax {
+			cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
+			continue
+		}
 
-	// When part of c1 is left from c2, cut the left part of c1 into a dedicated cuboid
-	if c1.Xmin < c2.Xmin {
-		cuboids = append(cuboids, Cuboid{xmin, c2.Xmin - 1, ymin, ymax, zmin, zmax})
-		xmin = c2.Xmin
-	}
-	// When part of c1 is right from c2, cut the right part of c1 into a dedicated cuboid
-	if c1.Xmax > c2.Xmax {
-		cuboids = append(cuboids, Cuboid{c2.Xmax + 1, xmax, ymin, ymax, zmin, zmax})
-		xmax = c2.Xmax
-	}
+		// When part of c1 is left from c2, cut the left part of c1 into a dedicated cuboid
+		if c1.Xmin < c2.Xmin {
+			cuboids = append(cuboids, Cuboid{xmin, c2.Xmin - 1, ymin, ymax, zmin, zmax})
+			xmin = c2.Xmin
+		}
+		// When part of c1 is right from c2, cut the right part of c1 into a dedicated cuboid
+		if c1.Xmax > c2.Xmax {
+			cuboids = append(cuboids, Cuboid{c2.Xmax + 1, xmax, ymin, ymax, zmin, zmax})
+			xmax = c2.Xmax
+		}
 
-	// When c1 is completely below or above or behind or in front of c1, return c1
-	if c1.Ymax < c2.Ymin || c1.Ymin > c2.Ymax || c1.Zmax < c2.Zmin || c1.Zmin > c2.Zmax {
-		cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
-		return cuboids
-	}
+		// When c1 is completely below or above or behind or in front of c1, return c1
+		if c1.Ymax < c2.Ymin || c1.Ymin > c2.Ymax || c1.Zmax < c2.Zmin || c1.Zmin > c2.Zmax {
+			cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
+			continue
+		}
 
-	// When part of c1 is below c2, cut the bottom part of c1 into a dedicated cuboid
-	if c1.Ymin < c2.Ymin {
-		cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, c2.Ymin - 1, zmin, zmax})
-		ymin = c2.Ymin
-	}
-	// When part of c1 is above c2, cut the top part of c1 into a dedicated cuboid
-	if c1.Ymax > c2.Ymax {
-		cuboids = append(cuboids, Cuboid{xmin, xmax, c2.Ymax + 1, ymax, zmin, zmax})
-		ymax = c2.Ymax
-	}
+		// When part of c1 is below c2, cut the bottom part of c1 into a dedicated cuboid
+		if c1.Ymin < c2.Ymin {
+			cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, c2.Ymin - 1, zmin, zmax})
+			ymin = c2.Ymin
+		}
+		// When part of c1 is above c2, cut the top part of c1 into a dedicated cuboid
+		if c1.Ymax > c2.Ymax {
+			cuboids = append(cuboids, Cuboid{xmin, xmax, c2.Ymax + 1, ymax, zmin, zmax})
+			ymax = c2.Ymax
+		}
 
-	// When c1 is completely behind or in front of c1, return c1
-	if c1.Zmax < c2.Zmin || c1.Zmin > c2.Zmax {
-		cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
-		return cuboids
-	}
+		// When c1 is completely behind or in front of c1, return c1
+		if c1.Zmax < c2.Zmin || c1.Zmin > c2.Zmax {
+			cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
+			continue
+		}
 
-	// When part of c1 is behind of c2, cut the behind part of c1 into a dedicated cuboid
-	if c1.Zmin < c2.Zmin {
-		cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, zmin, c2.Zmin - 1})
-		// zmin = c2.Zmin
-	}
-	// When part of c1 is in front of c2, cut the front part of c1 into a dedicated cuboid
-	if c1.Zmax > c2.Zmax {
-		cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, c2.Zmax + 1, zmax})
-		// zmax = c2.Zmax
-	}
+		// When part of c1 is behind of c2, cut the behind part of c1 into a dedicated cuboid
+		if c1.Zmin < c2.Zmin {
+			cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, zmin, c2.Zmin - 1})
+			// zmin = c2.Zmin
+		}
+		// When part of c1 is in front of c2, cut the front part of c1 into a dedicated cuboid
+		if c1.Zmax > c2.Zmax {
+			cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, c2.Zmax + 1, zmax})
+			// zmax = c2.Zmax
+		}
 
-	// At this point, c2 == Cuboid{xmin, xmax, ymin, ymax, zmin, zmax}
-	// It is not added to cuboids, as it will be added to the reactor later on
+		// At this point, c2 == Cuboid{xmin, xmax, ymin, ymax, zmin, zmax}
+		// It is not added to cuboids, as it will be added to the reactor later on
+	}
 
 	return cuboids
 }
 
-type Reactor []Cuboid
-
-func NewEmptyReactor() Reactor {
-	// A reactor contains at most 4096 cuboids, and way less than that most of the time
-	return make(Reactor, 0, 2<<10)
+// TurnOffCuboid removes all cubes of c in the reactor
+func (r *Reactor) TurnOffCuboid(c Cuboid) {
+	cuboids := r.GetOtherCuboidsForUpdate()
+	cuboids = r.SplitCuboidsAroundGivenCuboid(cuboids, c)
+	r.UpdateCurrentCuboids(cuboids)
 }
 
-func NewReactorAfterTurningOffACuboid(reactor Reactor, cuboid Cuboid) Reactor {
-	newreactor := NewEmptyReactor()
+// TurnOffCuboid adds all cubes of c in the reactor
+func (r *Reactor) TurnOnCuboid(c Cuboid) {
+	cuboids := r.GetOtherCuboidsForUpdate()
+	cuboids = r.SplitCuboidsAroundGivenCuboid(cuboids, c)
+	cuboids = append(cuboids, c)
+	r.UpdateCurrentCuboids(cuboids)
+}
 
-	for _, c := range reactor {
-		newreactor = append(newreactor, SplitCuboidAroundOtherCuboid(c, cuboid)...)
+// UpdateCurrentCuboids switches the active list of cuboids with the list provided
+func (r *Reactor) UpdateCurrentCuboids(cuboids []Cuboid) {
+	r.CuboidsID = 1 - r.CuboidsID
+	if r.CuboidsID == 0 {
+		r.C0 = cuboids
+	} else {
+		r.C1 = cuboids
 	}
-
-	return newreactor
 }
 
-func NewReactorAfterTurningOnACuboid(reactor Reactor, cuboid Cuboid) Reactor {
-	newreactor := NewReactorAfterTurningOffACuboid(reactor, cuboid)
-	newreactor = append(newreactor, cuboid)
-	return newreactor
-}
-
+// Volume returns the number of cubes that are turned on in the reactor
 func (r Reactor) Volume() (volume int) {
-	for _, c := range r {
+	for _, c := range r.GetCurrentCuboids() {
 		volume += c.Volume()
 	}
 
@@ -133,7 +179,7 @@ func (r Reactor) Volume() (volume int) {
 
 func run(s string) int {
 	// Your code goes here
-	reactor := NewEmptyReactor()
+	reactor := NewReactor()
 
 	for idx, line := range strings.Split(s, "\n") {
 		_ = idx
@@ -155,9 +201,9 @@ func run(s string) int {
 
 		switch ssplit[0] {
 		case "off":
-			reactor = NewReactorAfterTurningOffACuboid(reactor, Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
+			reactor.TurnOffCuboid(Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
 		case "on":
-			reactor = NewReactorAfterTurningOnACuboid(reactor, Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
+			reactor.TurnOnCuboid(Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
 		}
 	}
 
