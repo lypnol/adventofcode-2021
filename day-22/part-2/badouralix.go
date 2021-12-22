@@ -43,11 +43,12 @@ func SplitCuboidAroundOtherCuboid(c1, c2 Cuboid) (cuboids []Cuboid) {
 	zmin := c1.Zmin
 	zmax := c1.Zmax
 
-	// When c1 is completely left or right from c1, return c1
-	if c1.Xmax < c2.Xmin || c1.Xmin > c2.Xmax {
+	// When c1 is completely left or right or below or above or behind or in front of c1, return c1
+	if c1.Xmax < c2.Xmin || c1.Xmin > c2.Xmax || c1.Ymax < c2.Ymin || c1.Ymin > c2.Ymax || c1.Zmax < c2.Zmin || c1.Zmin > c2.Zmax {
 		cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
 		return cuboids
 	}
+
 	// When part of c1 is left from c2, cut the left part of c1 into a dedicated cuboid
 	if c1.Xmin < c2.Xmin {
 		cuboids = append(cuboids, Cuboid{xmin, c2.Xmin - 1, ymin, ymax, zmin, zmax})
@@ -59,11 +60,12 @@ func SplitCuboidAroundOtherCuboid(c1, c2 Cuboid) (cuboids []Cuboid) {
 		xmax = c2.Xmax
 	}
 
-	// When c1 is completely below or above c1, return c1
-	if c1.Ymax < c2.Ymin || c1.Ymin > c2.Ymax {
+	// When c1 is completely below or above or behind or in front of c1, return c1
+	if c1.Ymax < c2.Ymin || c1.Ymin > c2.Ymax || c1.Zmax < c2.Zmin || c1.Zmin > c2.Zmax {
 		cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
 		return cuboids
 	}
+
 	// When part of c1 is below c2, cut the bottom part of c1 into a dedicated cuboid
 	if c1.Ymin < c2.Ymin {
 		cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, c2.Ymin - 1, zmin, zmax})
@@ -80,15 +82,16 @@ func SplitCuboidAroundOtherCuboid(c1, c2 Cuboid) (cuboids []Cuboid) {
 		cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
 		return cuboids
 	}
+
 	// When part of c1 is behind of c2, cut the behind part of c1 into a dedicated cuboid
 	if c1.Zmin < c2.Zmin {
 		cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, zmin, c2.Zmin - 1})
-		zmin = c2.Zmin
+		// zmin = c2.Zmin
 	}
 	// When part of c1 is in front of c2, cut the front part of c1 into a dedicated cuboid
 	if c1.Zmax > c2.Zmax {
 		cuboids = append(cuboids, Cuboid{xmin, xmax, ymin, ymax, c2.Zmax + 1, zmax})
-		zmax = c2.Zmax
+		// zmax = c2.Zmax
 	}
 
 	// At this point, c2 == Cuboid{xmin, xmax, ymin, ymax, zmin, zmax}
@@ -99,23 +102,24 @@ func SplitCuboidAroundOtherCuboid(c1, c2 Cuboid) (cuboids []Cuboid) {
 
 type Reactor []Cuboid
 
-func NewReactor() Reactor {
-	return make(Reactor, 0, 1_000_000)
+func NewEmptyReactor() Reactor {
+	// A reactor contains at most 4096 cuboids, and way less than that most of the time
+	return make(Reactor, 0, 2<<10)
 }
 
-func (r Reactor) TurnOff(c Cuboid) Reactor {
-	newreactor := NewReactor()
+func NewReactorAfterTurningOffACuboid(reactor Reactor, cuboid Cuboid) Reactor {
+	newreactor := NewEmptyReactor()
 
-	for _, cuboid := range r {
-		newreactor = append(newreactor, SplitCuboidAroundOtherCuboid(cuboid, c)...)
+	for _, c := range reactor {
+		newreactor = append(newreactor, SplitCuboidAroundOtherCuboid(c, cuboid)...)
 	}
 
 	return newreactor
 }
 
-func (r Reactor) TurnOn(c Cuboid) (newreactor Reactor) {
-	newreactor = r.TurnOff(c)
-	newreactor = append(newreactor, c)
+func NewReactorAfterTurningOnACuboid(reactor Reactor, cuboid Cuboid) Reactor {
+	newreactor := NewReactorAfterTurningOffACuboid(reactor, cuboid)
+	newreactor = append(newreactor, cuboid)
 	return newreactor
 }
 
@@ -129,7 +133,7 @@ func (r Reactor) Volume() (volume int) {
 
 func run(s string) int {
 	// Your code goes here
-	reactor := NewReactor()
+	reactor := NewEmptyReactor()
 
 	for idx, line := range strings.Split(s, "\n") {
 		_ = idx
@@ -151,9 +155,9 @@ func run(s string) int {
 
 		switch ssplit[0] {
 		case "off":
-			reactor = reactor.TurnOff(Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
+			reactor = NewReactorAfterTurningOffACuboid(reactor, Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
 		case "on":
-			reactor = reactor.TurnOn(Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
+			reactor = NewReactorAfterTurningOnACuboid(reactor, Cuboid{xmin, xmax, ymin, ymax, zmin, zmax})
 		}
 	}
 
@@ -163,6 +167,14 @@ func run(s string) int {
 func main() {
 	// Uncomment this line to disable garbage collection
 	// debug.SetGCPercent(-1)
+
+	// defer profile.Start(profile.CPUProfile).Stop()
+	// defer profile.Start(profile.GoroutineProfile).Stop()
+	// defer profile.Start(profile.BlockProfile).Stop()
+	// defer profile.Start(profile.ThreadcreationProfile).Stop()
+	// defer profile.Start(profile.MemProfileHeap).Stop()
+	// defer profile.Start(profile.MemProfileAllocs).Stop()
+	// defer profile.Start(profile.MutexProfile).Stop()
 
 	var input []byte
 	var err error
