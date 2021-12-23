@@ -11,14 +11,10 @@ import (
 
 const NumberOfBeaconsSharedBetweenNeighbors = 12
 
-type Position struct {
-	X int
-	Y int
-	Z int
-}
+type Position uint64
 
-func NewPositionFromCoordinates(x, y, z int) Position {
-	return Position{x, y, z}
+func NewPositionFromCoordinates(x, y, z int16) Position {
+	return Position(uint64(uint16(x))<<32 + uint64(uint16(y))<<16 + uint64(uint16(z)))
 }
 
 func NewPositionFromQuaternion(q Quaternion) Position {
@@ -26,26 +22,41 @@ func NewPositionFromQuaternion(q Quaternion) Position {
 		panic("tried to convert non-vector quaternion to position")
 	}
 
-	return NewPositionFromCoordinates(int(q.X), int(q.Y), int(q.Z))
+	return NewPositionFromCoordinates(int16(q.X), int16(q.Y), int16(q.Z))
+}
+
+func (p Position) GetX() int16 {
+	return int16(p >> 32)
+}
+
+func (p Position) GetY() int16 {
+	return int16(p >> 16)
+}
+
+func (p Position) GetZ() int16 {
+	return int16(p)
 }
 
 func (p Position) Norm1() (norm int) {
-	if p.X >= 0 {
-		norm += p.X
+	x := int(p.GetX())
+	if x >= 0 {
+		norm += x
 	} else {
-		norm -= p.X
+		norm -= x
 	}
 
-	if p.Y >= 0 {
-		norm += p.Y
+	y := int(p.GetY())
+	if y >= 0 {
+		norm += y
 	} else {
-		norm -= p.Y
+		norm -= y
 	}
 
-	if p.Z >= 0 {
-		norm += p.Z
+	z := int(p.GetZ())
+	if z >= 0 {
+		norm += z
 	} else {
-		norm -= p.Z
+		norm -= z
 	}
 
 	return norm
@@ -64,15 +75,15 @@ func (p Position) Rotate(q Quaternion) Position {
 }
 
 func (p Position) Translate(t Position) Position {
-	return NewPositionFromCoordinates(p.X+t.X, p.Y+t.Y, p.Z+t.Z)
+	return NewPositionFromCoordinates(p.GetX()+t.GetX(), p.GetY()+t.GetY(), p.GetZ()+t.GetZ())
 }
 
 func (p Position) String() string {
-	return fmt.Sprintf("%d,%d,%d", p.X, p.Y, p.Z)
+	return fmt.Sprintf("%d,%d,%d", p.GetX(), p.GetY(), p.GetZ())
 }
 
 func SubstractPositions(p1, p2 Position) Position {
-	return NewPositionFromCoordinates(p1.X-p2.X, p1.Y-p2.Y, p1.Z-p2.Z)
+	return NewPositionFromCoordinates(p1.GetX()-p2.GetX(), p1.GetY()-p2.GetY(), p1.GetZ()-p2.GetZ())
 }
 
 type Quaternion struct {
@@ -87,7 +98,7 @@ func NewQuaternionFromCoordinates(w, x, y, z float64) Quaternion {
 }
 
 func NewQuaternionFromPosition(p Position) Quaternion {
-	return Quaternion{0, float64(p.X), float64(p.Y), float64(p.Z)}
+	return Quaternion{0, float64(p.GetX()), float64(p.GetY()), float64(p.GetZ())}
 }
 
 func (q Quaternion) Conjugate() Quaternion {
@@ -143,7 +154,7 @@ func NewScanner() Scanner {
 	}
 }
 
-func (sc *Scanner) AddBeacon(x, y, z int) {
+func (sc *Scanner) AddBeacon(x, y, z int16) {
 	beacon := NewPositionFromCoordinates(x, y, z)
 
 	sc.BeaconsAbsolutePosition[beacon] = struct{}{}
@@ -193,10 +204,10 @@ func IdentifyScanners(s string) []*Scanner {
 		scanner := NewScanner()
 		for _, line := range strings.Split(lines, "\n")[1:] {
 			split := strings.Split(line, ",")
-			x, _ := strconv.Atoi(split[0])
-			y, _ := strconv.Atoi(split[1])
-			z, _ := strconv.Atoi(split[2])
-			scanner.AddBeacon(x, y, z)
+			x, _ := strconv.ParseInt(split[0], 10, 16)
+			y, _ := strconv.ParseInt(split[1], 10, 16)
+			z, _ := strconv.ParseInt(split[2], 10, 16)
+			scanner.AddBeacon(int16(x), int16(y), int16(z))
 		}
 		scanners = append(scanners, &scanner)
 	}
