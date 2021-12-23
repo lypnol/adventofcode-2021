@@ -2,7 +2,7 @@ import dataclasses as dc
 import functools
 import heapq
 import re
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, Tuple
 
 from tool.runners.python import SubmissionPy
 
@@ -22,7 +22,7 @@ HALLS_POS = [0, 1, 3, 5, 7, 9, 10]
 
 
 HallsState = Dict[int, str]
-RoomsState = Tuple[Tuple[str, ...], Tuple[str, ...], Tuple[str, ...], Tuple[str, ...]]
+RoomsState = Tuple[str, str, str, str]
 
 
 @dc.dataclass
@@ -39,12 +39,9 @@ class State:
         return self.energy < other.energy
 
     def positions_str(self) -> str:
-        res: List[str] = []
-        res.extend(self.halls.get(pos, ".") for pos in HALLS_POS)
-        for room in self.rooms:
-            res.append("|")
-            res.extend(a for a in room)
-        return "".join(res)
+        a = "".join(self.halls.get(pos, ".") for pos in HALLS_POS)
+        b = "|".join(self.rooms)
+        return f"{a}{b}"
 
     def display(self) -> str:
         grid = [
@@ -74,10 +71,10 @@ def parse(s: str) -> Tuple[HallsState, RoomsState]:
     m2 = REGEX2.match(lines[3])
     assert m2 is not None
     return {}, (
-        (m2.group(1), "D", "D", m1.group(1)),
-        (m2.group(2), "B", "C", m1.group(2)),
-        (m2.group(3), "A", "B", m1.group(3)),
-        (m2.group(4), "C", "A", m1.group(4)),
+        f"{m2.group(1)}DD{m1.group(1)}",
+        f"{m2.group(2)}BC{m1.group(2)}",
+        f"{m2.group(3)}AB{m1.group(3)}",
+        f"{m2.group(4)}CA{m1.group(4)}",
     )
 
 
@@ -103,7 +100,7 @@ def green_light(green: Tuple[bool, bool, bool, bool], new_idx: int) -> Tuple[boo
 
 
 def next_moves(state: State) -> Iterable[State]:
-    room_halls = set(state.halls) & {3, 5, 7}
+    room_halls = set(state.halls) & {1, 3, 5, 7, 9}
     for room_idx, room in enumerate(state.rooms):
         if state.green[room_idx]:
             continue
@@ -141,7 +138,7 @@ def next_moves(state: State) -> Iterable[State]:
         left, right = sorted([hall, target])
         if any(left < h < right for h in room_halls):
             continue
-        next_room = state.rooms[target_room_idx] + (amphipod,)
+        next_room = state.rooms[target_room_idx] + amphipod
         yield State(
             state.energy + COST[amphipod] * dist(hall, target, len(state.rooms[target_room_idx])),
             {h: a for h, a in state.halls.items() if h != hall},
@@ -159,16 +156,19 @@ class SkaschSubmission(SubmissionPy):
         # Your code goes here
         halls, rooms = parse(s)
         q = [State(0, halls, rooms)]
-        visited = {q[0].positions_str()}
+        visited = {q[0].positions_str(): 0}
         while True:
             state = heapq.heappop(q)
+            positions_str = state.positions_str()
+            if positions_str in visited and state.energy > visited[positions_str]:
+                continue
             if is_valid(state.rooms):
                 return state.energy
             for next_state in next_moves(state):
                 position_str = next_state.positions_str()
-                if position_str in visited:
+                if position_str in visited and visited[position_str] <= next_state.energy:
                     continue
-                visited.add(position_str)
+                visited[position_str] = next_state.energy
                 heapq.heappush(q, next_state)
 
 
