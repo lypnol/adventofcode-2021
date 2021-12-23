@@ -8,42 +8,21 @@ from tool.runners.python import SubmissionPy
 
 REGEX1 = re.compile(r"###([A-D])#([A-D])#([A-D])#([A-D])###")
 REGEX2 = re.compile(r"  #([A-D])#([A-D])#([A-D])#([A-D])#")
-HALLS = {0, 1, 3, 5, 7, 9, 10}
+HALL_PATHS = (
+    ([3, 5, 7, 9, 10], [1, 0]),
+    ([5, 7, 9, 10], [3, 1, 0]),
+    ([7, 9, 10], [5, 3, 1, 0]),
+    ([9, 10], [7, 5, 3, 1, 0]),
+)
 MAX_Y = 4
 AMPHIPODS = "ABCD"
 TARGET_ROOM = {"A": 0, "B": 1, "C": 2, "D": 3}
 ROOM_X = [2, 4, 6, 8]
-
-
-@functools.lru_cache(None)
-def dist(hall_pos: int, room_x: int, room_size: int) -> int:
-    return abs(room_x - hall_pos) + (MAX_Y - room_size)
+HALLS_POS = [0, 1, 3, 5, 7, 9, 10]
 
 
 HallsState = Dict[int, str]
-RoomsState = Tuple[List[str], List[str], List[str], List[str]]
-
-COST = {"A": 1, "B": 10, "C": 100, "D": 1000}
-
-
-def is_valid(rooms: RoomsState) -> bool:
-    return all(
-        len(room) == MAX_Y and all(amphipod == target for amphipod in room) for room, target in zip(rooms, AMPHIPODS)
-    )
-
-
-def parse(s: str) -> Tuple[HallsState, RoomsState]:
-    lines = s.splitlines()
-    m1 = REGEX1.match(lines[2])
-    assert m1 is not None
-    m2 = REGEX2.match(lines[3])
-    assert m2 is not None
-    return {}, (
-        [m2.group(1), "D", "D", m1.group(1)],
-        [m2.group(2), "B", "C", m1.group(2)],
-        [m2.group(3), "A", "B", m1.group(3)],
-        [m2.group(4), "C", "A", m1.group(4)],
-    )
+RoomsState = Tuple[Tuple[str, ...], Tuple[str, ...], Tuple[str, ...], Tuple[str, ...]]
 
 
 @dc.dataclass
@@ -60,9 +39,12 @@ class State:
         return self.energy < other.energy
 
     def positions_str(self) -> str:
-        halls_str = "".join(f"{pos}{amphipod}" for pos, amphipod in sorted(self.halls.items()))
-        rooms_str = "|".join("".join(room) for room in self.rooms)
-        return f"{halls_str}.{rooms_str}"
+        res: List[str] = []
+        res.extend(self.halls.get(pos, ".") for pos in HALLS_POS)
+        for room in self.rooms:
+            res.append("|")
+            res.extend(a for a in room)
+        return "".join(res)
 
     def display(self) -> str:
         grid = [
@@ -82,31 +64,46 @@ class State:
         return "\n".join("".join(row) for row in grid).format(f" Energy: {self.energy}")
 
 
-def replace_room(rooms: RoomsState, next_room: List[str], room_idx: int) -> RoomsState:
-    if room_idx == 0:
-        return next_room, rooms[1], rooms[2], rooms[3]
-    elif room_idx == 1:
-        return rooms[0], next_room, rooms[2], rooms[3]
-    elif room_idx == 2:
-        return rooms[0], rooms[1], next_room, rooms[3]
-    else:
-        return rooms[0], rooms[1], rooms[2], next_room
+COST = {"A": 1, "B": 10, "C": 100, "D": 1000}
+
+
+def parse(s: str) -> Tuple[HallsState, RoomsState]:
+    lines = s.splitlines()
+    m1 = REGEX1.match(lines[2])
+    assert m1 is not None
+    m2 = REGEX2.match(lines[3])
+    assert m2 is not None
+    return {}, (
+        (m2.group(1), "D", "D", m1.group(1)),
+        (m2.group(2), "B", "C", m1.group(2)),
+        (m2.group(3), "A", "B", m1.group(3)),
+        (m2.group(4), "C", "A", m1.group(4)),
+    )
+
+
+def is_valid(rooms: RoomsState) -> bool:
+    return all(
+        len(room) == MAX_Y and all(amphipod == target for amphipod in room) for room, target in zip(rooms, AMPHIPODS)
+    )
+
+
+@functools.lru_cache(None)
+def dist(hall_pos: int, room_x: int, room_size: int) -> int:
+    return abs(room_x - hall_pos) + (MAX_Y - room_size)
+
+
+@functools.lru_cache(None)
+def replace_room(rooms: RoomsState, next_room: Tuple[str, ...], room_idx: int) -> RoomsState:
+    return rooms[:room_idx] + (next_room,) + rooms[room_idx + 1 :]  # type: ignore
 
 
 @functools.lru_cache(None)
 def green_light(green: Tuple[bool, bool, bool, bool], new_idx: int) -> Tuple[bool, bool, bool, bool]:
-    if new_idx == 0:
-        return True, green[1], green[2], green[3]
-    elif new_idx == 1:
-        return green[0], True, green[2], green[3]
-    elif new_idx == 2:
-        return green[0], green[1], True, green[3]
-    else:
-        return green[0], green[1], green[2], True
+    return green[:new_idx] + (True,) + green[new_idx + 1 :]  # type: ignore
 
 
 def next_moves(state: State) -> Iterable[State]:
-    free_halls = HALLS - set(state.halls)
+    room_halls = set(state.halls) & {3, 5, 7}
     for room_idx, room in enumerate(state.rooms):
         if state.green[room_idx]:
             continue
@@ -116,11 +113,20 @@ def next_moves(state: State) -> Iterable[State]:
         next_room = room[:-1]
         x = ROOM_X[room_idx]
         new_green = state.green
-        if all(a == AMPHIPODS[room_idx] for a in next_room):
+        if not state.green[room_idx] and all(a == AMPHIPODS[room_idx] for a in next_room):
             new_green = green_light(new_green, room_idx)
-        for target in free_halls:
-            if any((hall - x) * (target - hall) > 0 for hall in state.halls):
-                continue
+        for target in HALL_PATHS[room_idx][0]:
+            if target in state.halls:
+                break
+            yield State(
+                state.energy + COST[amphipod] * dist(target, x, len(next_room)),
+                {**state.halls, target: amphipod},
+                replace_room(state.rooms, next_room, room_idx),
+                new_green,
+            )
+        for target in HALL_PATHS[room_idx][1]:
+            if target in state.halls:
+                break
             yield State(
                 state.energy + COST[amphipod] * dist(target, x, len(next_room)),
                 {**state.halls, target: amphipod},
@@ -132,9 +138,10 @@ def next_moves(state: State) -> Iterable[State]:
         if not state.green[target_room_idx]:
             continue
         target = ROOM_X[target_room_idx]
-        if any((other_hall - hall) * (target - other_hall) > 0 for other_hall in state.halls if other_hall != hall):
+        left, right = sorted([hall, target])
+        if any(left < h < right for h in room_halls):
             continue
-        next_room = state.rooms[target_room_idx] + [amphipod]
+        next_room = state.rooms[target_room_idx] + (amphipod,)
         yield State(
             state.energy + COST[amphipod] * dist(hall, target, len(state.rooms[target_room_idx])),
             {h: a for h, a in state.halls.items() if h != hall},
@@ -158,10 +165,10 @@ class SkaschSubmission(SubmissionPy):
             if is_valid(state.rooms):
                 return state.energy
             for next_state in next_moves(state):
-                positions_str = next_state.positions_str()
-                if positions_str in visited:
+                position_str = next_state.positions_str()
+                if position_str in visited:
                     continue
-                visited.add(positions_str)
+                visited.add(position_str)
                 heapq.heappush(q, next_state)
 
 
