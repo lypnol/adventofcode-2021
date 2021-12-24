@@ -4,17 +4,19 @@
 #include <stdbool.h>
 #include <string.h>
 
-// Intuition : the number is a tree, we will represent it with one array of struct.
-//             each struct has two members : 
-//             - the status of the node (empty, leaf, default)
-//             - the value.
+/*
+Intuition 
+We represent the numbers with a tree implemented with an array (like a heap). 
+As the tree is not complete, we define a reserved value for EMPTY and DEFAULT (a node which is not a leaf).
+The heap representation let us know several things.
+- if the index is 2, 6, 14, 30 (or 62), the current node has no right neighbors.
+- if the index is 1, 3, 7, 15 (or 31), the current node has no left neighbors.
+*/
 
-enum STATUS {EMPTY, LEAF, DEFAULT};
-
-typedef struct {
-    enum STATUS status;
-    char value;
-} Node;
+typedef unsigned char Node;
+#define DEFAULT 255
+#define EMPTY 254
+#define is_leaf(value) (value < 254)
 #define left_child(idx) (2 * idx + 1)
 #define right_child(idx) (2 * idx + 2)
 #define parent(idx) (idx-1)/2
@@ -30,7 +32,7 @@ void parse_line(char **s, Node next[64]) {
             return;
             break;
         case '[':
-            next[idx].status = DEFAULT;
+            next[idx] = DEFAULT;
             depth++;
             idx = left_child(idx) + path[depth];
             break;
@@ -44,8 +46,7 @@ void parse_line(char **s, Node next[64]) {
             idx++;
             break;
         default:
-            next[idx].status = LEAF;
-            next[idx].value = (**s - '0');
+            next[idx] = (Node)(**s - '0');
             break;
         }
         (*s)++;
@@ -55,27 +56,25 @@ void parse_line(char **s, Node next[64]) {
 bool explode(Node current[64]) {
     size_t idx2;
     for (size_t idx=15; idx<31; idx++) /* iterate through 4th depth */ {
-        if (current[idx].status == DEFAULT) {
+        if (current[idx] == DEFAULT) {
             // explode
-            current[left_child(idx)].status = EMPTY;
-            current[right_child(idx)].status = EMPTY;
-            
             if (idx != 15) /* has_left_leaf */ {
                 idx2 = left_child(idx)-1;
-                while (current[idx2].status != LEAF) {
+                while (!is_leaf(current[idx2])) {
                     idx2 = parent(idx2);
-                }
-                current[idx2].value += current[left_child(idx)].value;
+                } 
+                current[idx2] += current[left_child(idx)];
             }
             if (idx != 30) /* has_right_leaf */ {
                 idx2 = right_child(idx) + 1;
-                while (current[idx2].status != LEAF) {
+                while (!is_leaf(current[idx2])) {
                     idx2 = parent(idx2);
                 }
-                current[idx2].value += current[right_child(idx)].value;
+                current[idx2] += current[right_child(idx)];
             }
-            current[idx].value = 0;
-            current[idx].status = LEAF;
+            current[idx] = 0;
+            current[left_child(idx)] = EMPTY;
+            current[right_child(idx)] = EMPTY;
             return true;
         }
     }
@@ -86,31 +85,25 @@ bool split(Node current[64]) {
     char half;
     size_t idx = 15;
     while (true) {
-        switch (current[idx].status) {
-        case LEAF:
-            if (current[idx].value > 9) {
+        if (is_leaf(current[idx])) {
+            if (current[idx] > 9) {
                 // split
-                current[idx].status = DEFAULT;
-                half = current[idx].value >> 1;
-                current[left_child(idx)].status = LEAF;
-                current[left_child(idx)].value = half;
-                current[right_child(idx)].status = LEAF;
-                current[right_child(idx)].value = half;
-                if (half << 1 != current[idx].value) {current[right_child(idx)].value++;}
+                half = current[idx] >> 1;
+                current[left_child(idx)] = half;
+                current[right_child(idx)] = half;
+                if (half << 1 != current[idx]) {current[right_child(idx)]++;}
+                current[idx] = DEFAULT;
                 return true;
-            } else if (idx == 30 || idx == 14 || idx == 6 || idx == 2) {
+            } else if (idx == 30 || idx == 14 || idx == 6 || idx == 2) /* not has right neighbors */ {
                 return false;
             } else {idx++;}
-            break;
-        case EMPTY:
-            idx = parent(idx);
-            break;
-        default:
-            idx = left_child(idx);
-            break;
         }
+        else if (current[idx] == EMPTY) {
+            idx = parent(idx);
+        } else if (current[idx] == DEFAULT) {
+            idx = left_child(idx);
+        } 
     }
-    //return false;
 }
 
 
@@ -147,23 +140,43 @@ void add(Node current[64], Node next[64]) {
     current[1] = current[0];
     current[2] = next[0];
 
-    current[0].status = DEFAULT;
+    current[0] = DEFAULT;
     reduce(current);
 }
 
 int magnitude(Node current[64], size_t idx) {
-    if (current[idx].status == LEAF) return current[idx].value;
+    if (is_leaf(current[idx])) return (int)current[idx];
     return 3 * magnitude(current, left_child(idx)) + 2 * magnitude(current, right_child(idx));
 }
 
+void rec_print(Node arr[64], size_t idx) {
+    if (is_leaf(arr[idx])) {
+        printf("%d", arr[idx]);
+    } else {
+        printf("[");
+        rec_print(arr, left_child(idx));
+        printf(",");
+        rec_print(arr, right_child(idx));
+        printf("]");
+    }
+}
+
+void print(Node arr[64], char *name) {
+    printf("%s=", name);
+    rec_print(arr, 0);
+    printf("\n");
+}
+
 int run(char* s) {
-    Node current[64] = {0};
-    Node next[64] = {0};
+    Node current[64]; 
+    memset(current, EMPTY, 64 * sizeof(Node));
+    Node next[64];
+    memset(next, EMPTY, 64 * sizeof(Node));
     parse_line(&s, current);
     while (*s) {
         parse_line(&s, next);
         add(current, next);
-        memset(next, 0, 64 * sizeof(Node));
+        memset(next, EMPTY, 64 * sizeof(Node));
     }
     return magnitude(current, 0);
 }
