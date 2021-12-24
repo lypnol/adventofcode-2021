@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const depth = 2
+
 var EnergyPerStep = map[byte]int{
 	'A': 1,
 	'B': 10,
@@ -28,10 +30,9 @@ var EnergyPerStep = map[byte]int{
 //
 type Burrow struct {
 	Hallway     [7]byte
-	Rooms       map[byte][2]byte
+	Rooms       map[byte][]byte
 	TotalEnergy int
 
-	final *bool
 	hash  *string
 	index *int
 	str   *string
@@ -43,11 +44,11 @@ func NewBurrowFromString(s string) *Burrow {
 		hallway[space] = '.'
 	}
 
-	rooms := make(map[byte][2]byte)
+	rooms := make(map[byte][]byte)
 	for _, room := range []byte{'A', 'B', 'C', 'D'} {
-		rooms[room] = [2]byte{
-			s[2*14+2*(int(room-'A'))+3],
-			s[3*14+2*(int(room-'A'))+3],
+		rooms[room] = []byte{
+			s[2*14+0*12+2*(int(room-'A'))+3],
+			s[3*14+0*12+2*(int(room-'A'))+3],
 		}
 	}
 
@@ -56,7 +57,6 @@ func NewBurrowFromString(s string) *Burrow {
 		Rooms:       rooms,
 		TotalEnergy: math.MaxInt64,
 
-		final: nil,
 		hash:  nil,
 		index: nil,
 		str:   nil,
@@ -67,10 +67,10 @@ func (b Burrow) CopyForUpdate() *Burrow {
 	// Hallway copy works because it is an array and not a slice
 	hallway := b.Hallway
 
-	// Single room copy works for the same reason
-	rooms := make(map[byte][2]byte)
-	for k, v := range b.Rooms {
-		rooms[k] = v
+	rooms := make(map[byte][]byte)
+	for room := range b.Rooms {
+		rooms[room] = make([]byte, depth)
+		copy(rooms[room][:], b.Rooms[room])
 	}
 
 	return &Burrow{
@@ -79,7 +79,6 @@ func (b Burrow) CopyForUpdate() *Burrow {
 		TotalEnergy: math.MaxInt64,
 
 		// Invalidate cached values to be later edited in place
-		final: nil,
 		hash:  nil,
 		index: nil,
 		str:   nil,
@@ -96,29 +95,13 @@ func (b *Burrow) Hash() (output string) {
 	}
 
 	for _, room := range []byte{'A', 'B', 'C', 'D'} {
-		output += string(b.Rooms[room][0])
-		output += string(b.Rooms[room][1])
+		for i := 0; i < depth; i++ {
+			output += string(b.Rooms[room][i])
+		}
 	}
 
 	b.hash = &output
 	return *b.hash
-}
-
-func (b *Burrow) IsFinal() bool {
-	if b.final != nil {
-		return *b.final
-	}
-
-	final := true
-	for room := range b.Rooms {
-		if b.Rooms[room][0] != room || b.Rooms[room][1] != room {
-			final = false
-			break
-		}
-	}
-
-	b.final = &final
-	return *b.final
 }
 
 func (b Burrow) MoveFromHallwayToRoom(space int, room byte) (*Burrow, int, error) {
@@ -154,29 +137,33 @@ func (b Burrow) MoveFromHallwayToRoom(space int, room byte) (*Burrow, int, error
 	if space == 6 {
 		steps = 8 - 2*int(room-'A')
 	}
-	steps += 1
 	// This piece of black magic is a bit different from MoveFromRoomToHallway
-	if b.Rooms[room][1] == '.' {
-		steps += 1
+	for i := 0; i < depth; i++ {
+		if b.Rooms[room][i] == '.' {
+			steps++
+		}
 	}
 
 	energy := steps * EnergyPerStep[amphipod]
 
 	burrow := b.CopyForUpdate()
 	burrow.Hallway[space] = '.'
-	if b.Rooms[room][1] == '.' {
-		burrow.Rooms[room] = [2]byte{'.', amphipod}
-	} else {
-		burrow.Rooms[room] = [2]byte{amphipod, b.Rooms[room][1]}
+	for i := depth - 1; i >= 0; i-- {
+		if b.Rooms[room][i] == '.' {
+			burrow.Rooms[room][i] = amphipod
+			break
+		}
 	}
 
 	return burrow, energy, nil
 }
 
 func (b Burrow) MoveFromRoomToHallway(room byte, space int) (*Burrow, int, error) {
-	amphipod := b.Rooms[room][1]
-	if b.Rooms[room][0] != '.' {
-		amphipod = b.Rooms[room][0]
+	amphipod := b.Rooms[room][depth-1]
+	for i := depth - 2; i >= 0; i-- {
+		if b.Rooms[room][i] != '.' {
+			amphipod = b.Rooms[room][i]
+		}
 	}
 	if amphipod == '.' {
 		return nil, 0, errors.New("room is empty")
@@ -209,20 +196,23 @@ func (b Burrow) MoveFromRoomToHallway(room byte, space int) (*Burrow, int, error
 	if space == 6 {
 		steps = 8 - 2*int(room-'A')
 	}
-	steps += 1
 	// This piece of black magic is a bit different from MoveFromHallwayToRoom
-	if b.Rooms[room][0] == '.' {
-		steps += 1
+	steps += depth
+	for i := depth - 2; i >= 0; i-- {
+		if b.Rooms[room][i] != '.' {
+			steps--
+		}
 	}
 
 	energy := steps * EnergyPerStep[amphipod]
 
 	burrow := b.CopyForUpdate()
 	burrow.Hallway[space] = amphipod
-	if b.Rooms[room][0] == '.' {
-		burrow.Rooms[room] = [2]byte{'.', '.'}
-	} else {
-		burrow.Rooms[room] = [2]byte{'.', b.Rooms[room][1]}
+	for i := 0; i < depth; i++ {
+		if b.Rooms[room][i] != '.' {
+			burrow.Rooms[room][i] = '.'
+			break
+		}
 	}
 
 	return burrow, energy, nil
@@ -253,12 +243,14 @@ func (b *Burrow) String() (output string) {
 		output += "#"
 	}
 	output += "##\n"
-	output += "  #"
-	for _, room := range []byte{'A', 'B', 'C', 'D'} {
-		output += string(b.Rooms[room][1])
-		output += "#"
+	for i := 1; i < depth; i++ {
+		output += "  #"
+		for _, room := range []byte{'A', 'B', 'C', 'D'} {
+			output += string(b.Rooms[room][i])
+			output += "#"
+		}
+		output += "\n"
 	}
-	output += "\n"
 	output += "  #########"
 
 	b.str = &output
@@ -302,42 +294,6 @@ func (pq *PriorityQueue) Pop() interface{} {
 	return b
 }
 
-func example() {
-	var s string
-	s += "#############"
-	s += "#...........#"
-	s += "###B#C#B#D###"
-	s += "  #A#D#C#A#"
-	s += "  #########"
-
-	burrow := NewBurrowFromString(s)
-	fmt.Println(burrow)
-	burrow, _, _ = burrow.MoveFromRoomToHallway('C', 2)
-	fmt.Println(burrow)
-	burrow, _, _ = burrow.MoveFromRoomToHallway('B', 3)
-	fmt.Println(burrow)
-	burrow, _, _ = burrow.MoveFromHallwayToRoom(3, 'C')
-	fmt.Println(burrow)
-	burrow, _, _ = burrow.MoveFromRoomToHallway('B', 3)
-	fmt.Println(burrow)
-	burrow, _, _ = burrow.MoveFromHallwayToRoom(2, 'B')
-	fmt.Println(burrow)
-	burrow, _, _ = burrow.MoveFromRoomToHallway('A', 2)
-	fmt.Println(burrow)
-	burrow, _, _ = burrow.MoveFromHallwayToRoom(2, 'B')
-	fmt.Println(burrow)
-	burrow, _, _ = burrow.MoveFromRoomToHallway('D', 4)
-	fmt.Println(burrow)
-	burrow, _, _ = burrow.MoveFromRoomToHallway('D', 5)
-	fmt.Println(burrow)
-	burrow, _, _ = burrow.MoveFromHallwayToRoom(4, 'D')
-	fmt.Println(burrow)
-	burrow, _, _ = burrow.MoveFromHallwayToRoom(3, 'D')
-	fmt.Println(burrow)
-	burrow, _, _ = burrow.MoveFromHallwayToRoom(5, 'A')
-	fmt.Println(burrow)
-}
-
 func run(s string) int {
 	// Your code goes here
 	pq := NewPriorityQueue()
@@ -354,55 +310,56 @@ func run(s string) int {
 	for pq.Len() > 0 {
 		src := heap.Pop(&pq).(*Burrow)
 		for room := range src.Rooms {
-			if src.Rooms[room][0] == room && src.Rooms[room][1] == room {
+			roomAlmostCompleted := true
+			roomFullyCompleted := true
+			for i := 0; i < depth; i++ {
+				roomAlmostCompleted = roomAlmostCompleted && (src.Rooms[room][i] == room || src.Rooms[room][i] == '.')
+				roomFullyCompleted = roomFullyCompleted && (src.Rooms[room][i] == room)
+			}
+
+			if roomFullyCompleted {
 				continue
 			}
 
-			for space := range src.Hallway {
-				dst, cost, err := src.MoveFromRoomToHallway(room, space)
-				if err == nil {
-					if _, ok := cache[dst.Hash()]; !ok {
-						cache[dst.Hash()] = dst
-					}
+			if roomAlmostCompleted {
+				for space := range src.Hallway {
+					if src.Hallway[space] == room {
+						dst, cost, err := src.MoveFromHallwayToRoom(space, room)
+						if err == nil {
+							if _, ok := cache[dst.Hash()]; !ok {
+								cache[dst.Hash()] = dst
+							}
 
-					if src.TotalEnergy+cost < cache[dst.Hash()].TotalEnergy {
-						cache[dst.Hash()].TotalEnergy = src.TotalEnergy + cost
+							if src.TotalEnergy+cost < cache[dst.Hash()].TotalEnergy {
+								cache[dst.Hash()].TotalEnergy = src.TotalEnergy + cost
 
-						if cache[dst.Hash()].index == nil {
-							heap.Push(&pq, dst)
-						} else {
-							heap.Fix(&pq, *cache[dst.Hash()].index)
+								if cache[dst.Hash()].index == nil {
+									heap.Push(&pq, dst)
+								} else {
+									heap.Fix(&pq, *cache[dst.Hash()].index)
+								}
+							}
 						}
 					}
-
-					// if cache[dst.Hash()].IsFinal() {
-					// 	return cache[dst.Hash()].TotalEnergy
-					// }
 				}
+			} else {
+				for space := range src.Hallway {
+					dst, cost, err := src.MoveFromRoomToHallway(room, space)
+					if err == nil {
+						if _, ok := cache[dst.Hash()]; !ok {
+							cache[dst.Hash()] = dst
+						}
 
-				if src.Hallway[space] != room {
-					continue
-				}
+						if src.TotalEnergy+cost < cache[dst.Hash()].TotalEnergy {
+							cache[dst.Hash()].TotalEnergy = src.TotalEnergy + cost
 
-				dst, cost, err = src.MoveFromHallwayToRoom(space, room)
-				if err == nil {
-					if _, ok := cache[dst.Hash()]; !ok {
-						cache[dst.Hash()] = dst
-					}
-
-					if src.TotalEnergy+cost < cache[dst.Hash()].TotalEnergy {
-						cache[dst.Hash()].TotalEnergy = src.TotalEnergy + cost
-
-						if cache[dst.Hash()].index == nil {
-							heap.Push(&pq, dst)
-						} else {
-							heap.Fix(&pq, *cache[dst.Hash()].index)
+							if cache[dst.Hash()].index == nil {
+								heap.Push(&pq, dst)
+							} else {
+								heap.Fix(&pq, *cache[dst.Hash()].index)
+							}
 						}
 					}
-
-					// if cache[dst.Hash()].IsFinal() {
-					// 	return cache[dst.Hash()].TotalEnergy
-					// }
 				}
 			}
 		}
