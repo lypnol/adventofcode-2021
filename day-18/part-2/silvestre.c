@@ -24,7 +24,6 @@ void parse_line(char **s, Node next[64]) {
     bool path[5] = {0}; // 5 bits used, 0 for left, 1 for right. first one is always zero.
     size_t depth = 0;
     while (**s) {
-        //printf("idx=%lu, depth=%u, path[depth]=%u, **s=%c\n", idx, depth, path[depth], **s);
         switch (**s) {
         case '\n':
             (*s)++;
@@ -77,8 +76,6 @@ bool explode(Node current[64]) {
             }
             current[idx].value = 0;
             current[idx].status = LEAF;
-            //printf("explode at %lu -> ", idx);
-            //print(current, "current");
             return true;
         }
     }
@@ -88,7 +85,6 @@ bool explode(Node current[64]) {
 bool split(Node current[64]) {
     char half;
     size_t idx = 15;
-    //for (size_t idx=0; idx<63; idx++) {
     while (true) {
         switch (current[idx].status) {
         case LEAF:
@@ -101,8 +97,6 @@ bool split(Node current[64]) {
                 current[right_child(idx)].status = LEAF;
                 current[right_child(idx)].value = half;
                 if (half << 1 != current[idx].value) {current[right_child(idx)].value++;}
-                //printf("split at %lu -> ", idx);
-                //print(current, "current");
                 return true;
             } else if (idx == 30 || idx == 14 || idx == 6 || idx == 2) {
                 return false;
@@ -116,7 +110,6 @@ bool split(Node current[64]) {
             break;
         }
     }
-    //return false;
 }
 
 
