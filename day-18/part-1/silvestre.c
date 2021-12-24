@@ -4,10 +4,14 @@
 #include <stdbool.h>
 #include <string.h>
 
-// Intuition : the number is a tree, we will represent it with one array of struct.
-//             each struct has two members : 
-//             - the status of the node (empty, leaf, default)
-//             - the value.
+/*
+Intuition 
+We represent the fish's numbers with a tree implemented with an array (like a heap). 
+As the tree is not complete, we use a field 'status' to mark if a node is a LEAF, EMPTY or DEFAULT (a node which is not a leaf).
+The heap representation let us know several things.
+- if the index is 2, 6, 14, 30 (or 62), the current node has no right neighbors.
+- if the index is 1, 3, 7, 15 (or 31), the current node has no left neighbors.
+*/
 
 enum STATUS {EMPTY, LEAF, DEFAULT};
 
