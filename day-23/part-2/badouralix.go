@@ -351,19 +351,21 @@ func run(s string) int {
 				}
 			} else {
 				for space := range src.Hallway {
-					dst, cost, err := src.MoveFromRoomToHallway(room, space)
-					if err == nil {
-						if _, ok := cache[dst.Hash()]; !ok {
-							cache[dst.Hash()] = dst
-						}
+					if src.Hallway[space] == '.' {
+						dst, cost, err := src.MoveFromRoomToHallway(room, space)
+						if err == nil {
+							if _, ok := cache[dst.Hash()]; !ok {
+								cache[dst.Hash()] = dst
+							}
 
-						if src.TotalEnergy+cost < cache[dst.Hash()].TotalEnergy {
-							cache[dst.Hash()].TotalEnergy = src.TotalEnergy + cost
+							if src.TotalEnergy+cost < cache[dst.Hash()].TotalEnergy {
+								cache[dst.Hash()].TotalEnergy = src.TotalEnergy + cost
 
-							if cache[dst.Hash()].index == nil {
-								heap.Push(&pq, dst)
-							} else {
-								heap.Fix(&pq, *cache[dst.Hash()].index)
+								if cache[dst.Hash()].index == nil {
+									heap.Push(&pq, dst)
+								} else {
+									heap.Fix(&pq, *cache[dst.Hash()].index)
+								}
 							}
 						}
 					}
