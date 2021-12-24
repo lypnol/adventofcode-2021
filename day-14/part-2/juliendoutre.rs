@@ -13,37 +13,55 @@ fn main() {
 fn run(input: &str, steps: usize) -> usize {
     let mut lines = input.lines();
 
-    let mut state = lines.next().unwrap().as_bytes().to_owned();
-
+    let state = lines.next().unwrap().as_bytes().to_owned();
     lines.next();
 
+    let mut table = HashMap::<(u8, u8), [usize; 26]>::new();
     let mut rules = HashMap::<(u8, u8), u8>::new();
+
     lines
         .map(|line| line.split_once(" -> ").unwrap())
         .for_each(|(pattern, insert)| {
             let pattern = pattern.as_bytes();
-            rules.insert((pattern[0], pattern[1]), insert.as_bytes()[0]);
+            let insert = insert.as_bytes()[0];
+            rules.insert((pattern[0], pattern[1]), insert);
+            table.insert((pattern[0], pattern[1]), init_frequencies(insert));
         });
 
-    for _ in 0..steps {
-        let mut new_state = Vec::<u8>::new();
-        new_state.push(state[0]);
+    for _ in 1..steps {
+        let mut tmp = HashMap::<(u8, u8), [usize; 26]>::new();
 
-        for idx in 1..state.len() {
-            if let Some(&rule) = rules.get(&(state[idx - 1], state[idx])) {
-                new_state.push(rule);
+        for ((a, b), &frequencies) in &table {
+            if let Some(rule) = rules.get(&(*a, *b)) {
+                let mut f = merge_frequencies(
+                    table.get(&(*a, *rule)).unwrap(),
+                    table.get(&(*rule, *b)).unwrap(),
+                );
+                f[*rule as usize - 65] += 1;
+
+                tmp.insert((*a, *b), f);
+            } else {
+                tmp.insert((*a, *b), frequencies);
             }
-
-            new_state.push(state[idx]);
         }
 
-        state = new_state;
+        table = tmp;
     }
 
     let mut frequencies = [0; 26];
-    for n in state {
-        frequencies[n as usize - 65] += 1;
+    let mut previous = state[0];
+    for b in &state[1..] {
+        if let Some(f) = table.get(&(previous, *b)) {
+            for i in 0..26 {
+                frequencies[i] += f[i];
+            }
+        }
+
+        frequencies[previous as usize - 65] += 1;
+        previous = *b;
     }
+
+    frequencies[previous as usize - 65] += 1;
 
     let (mut max, mut min) = (0, usize::MAX);
     for n in frequencies {
@@ -57,6 +75,23 @@ fn run(input: &str, steps: usize) -> usize {
     }
 
     max - min
+}
+
+fn init_frequencies(a: u8) -> [usize; 26] {
+    let mut f = [0; 26];
+    f[a as usize - 65] = 1;
+
+    f
+}
+
+fn merge_frequencies(a: &[usize; 26], b: &[usize; 26]) -> [usize; 26] {
+    let mut f = [0; 26];
+
+    for i in 0..26 {
+        f[i] = a[i] + b[i];
+    }
+
+    f
 }
 
 #[cfg(test)]
