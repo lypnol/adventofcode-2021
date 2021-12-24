@@ -30,7 +30,7 @@ var EnergyPerStep = map[byte]int{
 //
 type Burrow struct {
 	Hallway     [7]byte
-	Rooms       map[byte][]byte
+	Rooms       map[byte][depth]byte
 	TotalEnergy int
 
 	hash  *string
@@ -44,9 +44,9 @@ func NewBurrowFromString(s string) *Burrow {
 		hallway[space] = '.'
 	}
 
-	rooms := make(map[byte][]byte)
+	rooms := make(map[byte][depth]byte)
 	for _, room := range []byte{'A', 'B', 'C', 'D'} {
-		rooms[room] = []byte{
+		rooms[room] = [depth]byte{
 			s[2*14+0*12+2*(int(room-'A'))+3],
 			s[3*14+0*12+2*(int(room-'A'))+3],
 		}
@@ -67,10 +67,9 @@ func (b Burrow) CopyForUpdate() *Burrow {
 	// Hallway copy works because it is an array and not a slice
 	hallway := b.Hallway
 
-	rooms := make(map[byte][]byte)
+	rooms := make(map[byte][depth]byte)
 	for room := range b.Rooms {
-		rooms[room] = make([]byte, depth)
-		copy(rooms[room][:], b.Rooms[room])
+		rooms[room] = b.Rooms[room]
 	}
 
 	return &Burrow{
@@ -150,7 +149,9 @@ func (b Burrow) MoveFromHallwayToRoom(space int, room byte) (*Burrow, int, error
 	burrow.Hallway[space] = '.'
 	for i := depth - 1; i >= 0; i-- {
 		if b.Rooms[room][i] == '.' {
-			burrow.Rooms[room][i] = amphipod
+			newroom := b.Rooms[room]
+			newroom[i] = amphipod
+			burrow.Rooms[room] = newroom
 			break
 		}
 	}
@@ -210,7 +211,9 @@ func (b Burrow) MoveFromRoomToHallway(room byte, space int) (*Burrow, int, error
 	burrow.Hallway[space] = amphipod
 	for i := 0; i < depth; i++ {
 		if b.Rooms[room][i] != '.' {
-			burrow.Rooms[room][i] = '.'
+			newroom := b.Rooms[room]
+			newroom[i] = '.'
+			burrow.Rooms[room] = newroom
 			break
 		}
 	}
