@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-func run(s string) interface{} {
+func run(s string) string {
 	// Your code goes here
-	return struct{}{}
+	return "None"
 }
 
 func main() {
