@@ -47,13 +47,17 @@ void enhance(Image *src, Image *dst, bool algorithm[512]) {
     ushort algo_idx;
     // init border
     algo_idx = (src->pixels[src->xmin -1][src->ymin -1] == false) ? 0 : 511;
-    for (size_t col = src->ymin-2; col < src->ymax+2; col++) {
+    for (size_t col = src->ymin-3; col < src->ymax+3; col++) {
+        dst->pixels[src->xmin-3][col] = algorithm[algo_idx];
         dst->pixels[src->xmin-2][col] = algorithm[algo_idx];
         dst->pixels[src->xmax+1][col] = algorithm[algo_idx];
+        dst->pixels[src->xmax+2][col] = algorithm[algo_idx];
     }
-    for (size_t row = src->xmin-2; row < src->xmax+2; row++) {
+    for (size_t row = src->xmin-3; row < src->xmax+3; row++) {
+        dst->pixels[row][src->ymin-3] = algorithm[algo_idx];
         dst->pixels[row][src->ymin-2] = algorithm[algo_idx];
         dst->pixels[row][src->ymax+1] = algorithm[algo_idx];
+        dst->pixels[row][src->ymax+2] = algorithm[algo_idx];
     }
     // main
     for (size_t row = src->xmin-1; row < src->xmax+1; row++) {
