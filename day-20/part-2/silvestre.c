@@ -2,6 +2,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #define INITIAL_IMAGE_SIZE 100
 #define N_STEPS 50
@@ -9,6 +10,14 @@
 
 typedef unsigned long ulong;
 typedef unsigned short ushort;
+
+typedef struct {
+    bool pixels[MAX_IMAGE_SIZE][MAX_IMAGE_SIZE];
+    size_t xmin;
+    size_t xmax;
+    size_t ymin;
+    size_t ymax;
+} Image;
 
 void parse_algorithm(char **s, bool algorithm[512]) {
     size_t idx = 0;
@@ -19,53 +28,61 @@ void parse_algorithm(char **s, bool algorithm[512]) {
     }
 }
 
-void parse_image(char **s, bool image[MAX_IMAGE_SIZE][MAX_IMAGE_SIZE]) {
+void parse_image(char **s, Image *image) {
     while (**s == '\n') {(*s)++;}
     for (size_t row = 0; row < INITIAL_IMAGE_SIZE; row++) {
         for (size_t col = 0; col < INITIAL_IMAGE_SIZE; col++) {
-            image[row+N_STEPS+1][col+N_STEPS+1] = (**s == '#');
+            image->pixels[row+N_STEPS+1][col+N_STEPS+1] = (**s == '#');
             (*s)++;
         }   
         (*s)++; // return line
     }
+    image->xmin=N_STEPS+1;
+    image->xmax=INITIAL_IMAGE_SIZE+N_STEPS+1;
+    image->ymin=N_STEPS+1;
+    image->ymax=INITIAL_IMAGE_SIZE+N_STEPS+1;
 }
 
-void enhance(bool src[MAX_IMAGE_SIZE][MAX_IMAGE_SIZE], bool dst[MAX_IMAGE_SIZE][MAX_IMAGE_SIZE], bool algorithm[512]) {
-    ushort algo_idx = 0;
+void enhance(Image *src, Image *dst, bool algorithm[512]) {
+    ushort algo_idx;
     // init border
-    algo_idx = (src[0][0] == false) ? 0 : 511;
-    for (size_t col = 0; col < MAX_IMAGE_SIZE; col++) {
-        dst[0][col] = algorithm[algo_idx];
-        dst[MAX_IMAGE_SIZE-1][col] = algorithm[algo_idx];
+    algo_idx = (src->pixels[src->xmin -1][src->ymin -1] == false) ? 0 : 511;
+    for (size_t col = src->ymin-2; col < src->ymax+2; col++) {
+        dst->pixels[src->xmin-2][col] = algorithm[algo_idx];
+        dst->pixels[src->xmax+1][col] = algorithm[algo_idx];
     }
-    for (size_t row = 0; row < MAX_IMAGE_SIZE; row++) {
-        dst[row][0] = algorithm[algo_idx];
-        dst[row][MAX_IMAGE_SIZE-1] = algorithm[algo_idx];
+    for (size_t row = src->xmin-2; row < src->xmax+2; row++) {
+        dst->pixels[row][src->ymin-2] = algorithm[algo_idx];
+        dst->pixels[row][src->ymax+1] = algorithm[algo_idx];
     }
     // main
-    for (size_t row = 1; row < MAX_IMAGE_SIZE-1; row++) {
-        for (size_t col = 1; col < MAX_IMAGE_SIZE-1; col++) {
+    for (size_t row = src->xmin-1; row < src->xmax+1; row++) {
+        for (size_t col = src->ymin-1; col < src->ymax+1; col++) {
             algo_idx = (
-                (src[row-1][col-1] << 8) | 
-                (src[row-1][col] << 7) | 
-                (src[row-1][col+1] << 6) |
-                (src[row][col-1] << 5) | 
-                (src[row][col] << 4) | 
-                (src[row][col+1] << 3) | 
-                (src[row+1][col-1] << 2) | 
-                (src[row+1][col] << 1) | 
-                (src[row+1][col+1] << 0)
+                (src->pixels[row-1][col-1] << 8) | 
+                (src->pixels[row-1][col] << 7) | 
+                (src->pixels[row-1][col+1] << 6) |
+                (src->pixels[row][col-1] << 5) | 
+                (src->pixels[row][col] << 4) | 
+                (src->pixels[row][col+1] << 3) | 
+                (src->pixels[row+1][col-1] << 2) | 
+                (src->pixels[row+1][col] << 1) | 
+                (src->pixels[row+1][col+1] << 0)
             );
-            dst[row][col] = algorithm[algo_idx];
+            dst->pixels[row][col] = algorithm[algo_idx];
         }
     }
+    dst->xmin = src->xmin-1;
+    dst->xmax = src->xmax+1;
+    dst->ymin = src->ymin-1;
+    dst->ymax = src->ymax+1;
 }
 
-ulong count_pixels(bool image[MAX_IMAGE_SIZE][MAX_IMAGE_SIZE]) {
+ulong count_pixels(Image *image) {
     ulong counter = 0;
-    for (size_t row = 0; row < MAX_IMAGE_SIZE; row++) {
-        for (size_t col = 0; col < MAX_IMAGE_SIZE; col++) {
-            counter+=image[row][col];
+    for (size_t row = image->xmin; row < image->xmax; row++) {
+        for (size_t col = image->ymin; col < image->ymax; col++) {
+            counter+=image->pixels[row][col];
         }
     }
     return counter;
@@ -73,15 +90,17 @@ ulong count_pixels(bool image[MAX_IMAGE_SIZE][MAX_IMAGE_SIZE]) {
 
 ulong run(char* s) {
     bool algorithm[512] = {0};
-    bool image1[MAX_IMAGE_SIZE][MAX_IMAGE_SIZE] = {0};
-    bool image2[MAX_IMAGE_SIZE][MAX_IMAGE_SIZE] = {0};
+    Image image1; 
+    memset(image1.pixels, 0, sizeof(bool) * MAX_IMAGE_SIZE * MAX_IMAGE_SIZE);
+    Image image2;
+    memset(image2.pixels, 0, sizeof(bool) * MAX_IMAGE_SIZE * MAX_IMAGE_SIZE);
     parse_algorithm(&s, algorithm);
-    parse_image(&s, image1);
+    parse_image(&s, &image1);
     for (size_t step = 0; step < N_STEPS/2; step++) {
-        enhance(image1, image2, algorithm);
-        enhance(image2, image1, algorithm);
+        enhance(&image1, &image2, algorithm);
+        enhance(&image2, &image1, algorithm);
     }
-    return count_pixels(image1);
+    return count_pixels(&image1);
 }
 
 int main(int argc, char** argv)
