@@ -1,11 +1,16 @@
 from itertools import product
-from typing import DefaultDict
+from typing import DefaultDict, Dict, List, Tuple
 
 import numpy as np
+import numpy.typing as npt
 from scipy.spatial.distance import pdist, squareform
 from scipy.spatial.transform import Rotation
 
 from tool.runners.python import SubmissionPy
+
+N_OVERLAP = 12
+
+NDArrayInt = npt.NDArray[np.int_]
 
 
 class ThomrenSubmission(SubmissionPy):
@@ -14,92 +19,158 @@ class ThomrenSubmission(SubmissionPy):
         :param s: input in string format
         :return: solution flag
         """
-        # Your code goes here
-        scan_beacons = parse_input(s)
-        pairwise_distances = [
-            pdist(np.array(sb), metric="sqeuclidean").astype(int) for sb in scan_beacons
-        ]
+        beacons_per_scanner = parse_input(s)
 
-        n_possible_matches = np.zeros((len(scan_beacons), len(scan_beacons)), dtype=int)
-        for i in range(len(scan_beacons)):
-            for j in range(i + 1, len(scan_beacons)):
-                pdi = pairwise_distances[i]
-                pdj = pairwise_distances[j]
-                n_possible_matches[i, j] = len(set(pdi) & set(pdj))
+        # affine transforms relative to scanner 0
+        transforms = find_transforms(beacons_per_scanner)
 
-        possible_matches = np.argwhere(n_possible_matches >= (12 * 11 // 2))
+        # points with positions relative to scanner 0
+        all_points = {tuple(p) for p in beacons_per_scanner[0]}
+        for i, ht in transforms.items():
+            transformed_points = np.rint(
+                apply_affine_transform(beacons_per_scanner[i], ht)
+            ).astype(int)
+            all_points |= {tuple(p) for p in transformed_points}
 
-        possible_matches_dict = DefaultDict(list)
-        for i, j in possible_matches:
-            possible_matches_dict[i].append(j)
-            possible_matches_dict[j].append(i)
-
-        all_points = {tuple(p) for p in scan_beacons[0]}
-        transforms = dict()
-        transforms[0] = np.eye(4, dtype=int)
-        frontier = {0}
-        while len(frontier):
-            i = frontier.pop()
-            for j in possible_matches_dict[i]:
-                if j in transforms:
-                    continue
-                pdi = pairwise_distances[i]
-                pdj = pairwise_distances[j]
-
-                i_common = []
-                for idx, line in enumerate(squareform(pdi)):
-                    if len(set(line) & set(pdj)) >= 11:
-                        i_common.append(idx)
-                j_common = []
-                for idx, line in enumerate(squareform(pdj)):
-                    if len(set(line) & set(pdi)) >= 11:
-                        j_common.append(idx)
-
-                i_common_sorted = np.argsort(
-                    np.sum(squareform(pdi)[i_common, :][:, i_common], axis=1)
-                )
-                j_common_sorted = np.argsort(
-                    np.sum(squareform(pdj)[j_common, :][:, j_common], axis=1)
-                )
-
-                i_common_points = np.array(scan_beacons[i], dtype=int)[i_common][
-                    i_common_sorted
-                ]
-                j_common_points = np.array(scan_beacons[j], dtype=int)[j_common][
-                    j_common_sorted
-                ]
-
-                i_centroid = np.mean(i_common_points, axis=0)
-                j_centroid = np.mean(j_common_points, axis=0)
-                i_centered = i_common_points - i_centroid
-                j_centered = j_common_points - j_centroid
-                rot, rmsd = Rotation.align_vectors(i_centered, j_centered)
-                R = rot.as_matrix()
-                t = i_centroid - j_centroid.T @ R.T
-                ht = get_affine_transform(R, t)
-                if rmsd > 1e-4:
-                    # false positive, points cannot be matched
-                    continue
-
-                ht0 = transforms[i]
-                if j not in transforms:
-                    frontier |= {j}
-                transforms[j] = ht0 @ ht
-
-                sbj = np.array(scan_beacons[j], dtype=int)
-                transformed_points = np.rint(
-                    apply_affine_transform(sbj, transforms[j])
-                ).astype(int)
-                all_points |= {tuple(p) for p in transformed_points}
-
-        m = -1
-        for (i, j) in product(range(len(scan_beacons)), repeat=2):
+        max_dist = -1
+        for (i, j) in product(range(len(beacons_per_scanner)), repeat=2):
             ti = transforms[i][:-1, -1]
             tj = transforms[j][:-1, -1]
             d = manhattan_dist(ti, tj)
-            if d > m:
-                m = d
-        return round(m)
+            if d > max_dist:
+                max_dist = d
+        return round(max_dist)
+
+
+def parse_input(s: str) -> List[NDArrayInt]:
+    res = []
+    for scanner_data in s.split("\n\n"):
+        beacons = []
+        for line in scanner_data.splitlines()[1:]:
+            x, y, z = line.split(",")
+            beacons.append((int(x), int(y), int(z)))
+        res.append(np.array(beacons, dtype=int))
+    return res
+
+
+def find_transforms(
+    beacons_per_scanner: List[NDArrayInt],
+) -> Dict[int, NDArrayInt]:
+    pairwise_distances = [
+        pdist(np.array(sb), metric="sqeuclidean").astype(int)
+        for sb in beacons_per_scanner
+    ]
+    possible_matches_dict = find_possible_matches(pairwise_distances)
+
+    # affine transforms relative to scanner 0
+    transforms = dict()
+    transforms[0] = np.eye(4, dtype=int)
+
+    # iteratively fill transforms
+    frontier = {0}
+    while len(frontier):
+        i = frontier.pop()
+        for j in possible_matches_dict[i]:
+            if j in transforms:
+                continue
+
+            cp = find_common_points(
+                beacons_per_scanner[i],
+                beacons_per_scanner[j],
+                pairwise_distances[i],
+                pairwise_distances[j],
+            )
+            if cp is None:
+                # False positive, no overlap despite enough similar pairwise distances
+                continue
+            i_common_points, j_common_points = cp
+
+            i_centroid = np.mean(i_common_points, axis=0)
+            j_centroid = np.mean(j_common_points, axis=0)
+
+            i_centered = i_common_points - i_centroid
+            j_centered = j_common_points - j_centroid
+
+            rot, rmsd = Rotation.align_vectors(i_centered, j_centered)
+            if rmsd > 1e-4:
+                # False positive, points cannot be matched
+                continue
+            R = rot.as_matrix()
+            t = i_centroid - j_centroid.T @ R.T
+            ht = get_affine_transform(R, t)
+
+            if j not in transforms:
+                frontier |= {j}
+            ht0 = transforms[i]
+            transforms[j] = ht0 @ ht
+
+    return transforms
+
+
+def find_possible_matches(
+    pairwise_distances: List[NDArrayInt],
+) -> Dict[int, List[int]]:
+    """Use the fact that affine transforms preserve distances between points to find
+    scanners with possible overlaps of at least 12 points. If there is an overlap, then
+    the pairwise distances between the overlapping points exists for both scanners."""
+    N = len(pairwise_distances)
+    n_similar_pairwise_distances = np.zeros((N, N), dtype=int)
+    for i in range(N):
+        for j in range(i + 1, N):
+            pdi = pairwise_distances[i]
+            pdj = pairwise_distances[j]
+            n_similar_pairwise_distances[i, j] = len(set(pdi) & set(pdj))
+
+    possible_matches_list = np.argwhere(
+        n_similar_pairwise_distances >= (N_OVERLAP * (N_OVERLAP - 1) // 2)
+    )
+
+    possible_matches_dict = DefaultDict(list)
+    for i, j in possible_matches_list:
+        possible_matches_dict[i].append(j)
+        possible_matches_dict[j].append(i)
+
+    return possible_matches_dict
+
+
+def find_common_points(
+    points_i: NDArrayInt,
+    points_j: NDArrayInt,
+    pairwise_distances_i: NDArrayInt,
+    pairwise_distances_j: NDArrayInt,
+) -> Tuple[NDArrayInt, NDArrayInt]:
+    i_common_indices = []
+    for idx, line in enumerate(squareform(pairwise_distances_i)):
+        if len(set(line) & set(pairwise_distances_j)) >= 11:
+            i_common_indices.append(idx)
+
+    j_common_indices = []
+    for idx, line in enumerate(squareform(pairwise_distances_j)):
+        if len(set(line) & set(pairwise_distances_i)) >= 11:
+            j_common_indices.append(idx)
+
+    if len(i_common_indices) < N_OVERLAP or len(j_common_indices) < N_OVERLAP:
+        # False positive, not enough overlap despite enough similar pairwise distances
+        return None
+
+    # TODO: make it work when some points have similar pairwise distance values
+    i_common_indices_sorted = np.argsort(
+        np.sum(
+            squareform(pairwise_distances_i)[i_common_indices, :][:, i_common_indices],
+            axis=1,
+        )
+    )
+    j_common_indices_sorted = np.argsort(
+        np.sum(
+            squareform(pairwise_distances_j)[j_common_indices, :][:, j_common_indices],
+            axis=1,
+        )
+    )
+
+    i_common_points = points_i[i_common_indices][i_common_indices_sorted]
+    j_common_points = points_j[j_common_indices][j_common_indices_sorted]
+
+    return i_common_points, j_common_points
 
 
 def get_affine_transform(R, t):
@@ -114,17 +185,6 @@ def apply_affine_transform(X, ht):
     X = np.c_[X, np.ones(len(X))]
     Y = X @ ht.T
     return Y[:, :-1]
-
-
-def parse_input(s):
-    res = []
-    for scanner_data in s.split("\n\n"):
-        beacons = []
-        for line in scanner_data.splitlines()[1:]:
-            x, y, z = line.split(",")
-            beacons.append((int(x), int(y), int(z)))
-        res.append(beacons)
-    return res
 
 
 def manhattan_dist(x, y):
