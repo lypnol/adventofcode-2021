@@ -1,3 +1,4 @@
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from typing import Optional
 
@@ -76,22 +77,21 @@ def intersect(cuboid1: Cuboid, cuboid2: Cuboid) -> Optional[Cuboid]:
 
 class Reactor:
     def __init__(self):
-        self.cuboids = []
+        self.cuboids = defaultdict(int)
 
     def set(self, cuboid: Cuboid, state: bool):
-        new_cuboids = []
+        new_cuboids = defaultdict(int)
         if state:
-            new_cuboids.append((cuboid, 1))
-
-        for c, v in self.cuboids:
+            new_cuboids[cuboid] += 1
+        for c, v in self.cuboids.items():
             if (intersection := intersect(c, cuboid)) is not None:
-                new_cuboids.append((intersection, -v))
+                new_cuboids[intersection] -= v
 
-        self.cuboids += new_cuboids
-        # print(self.cuboids, self.n_cubes_on())
+        for c, v in new_cuboids.items():
+            self.cuboids[c] += v
 
     def n_cubes_on(self) -> int:
-        return sum(cuboid.volume() * v for cuboid, v in self.cuboids)
+        return sum(cuboid.volume() * v for cuboid, v in self.cuboids.items())
 
 
 def test_thomren():
