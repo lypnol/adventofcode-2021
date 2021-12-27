@@ -53,10 +53,8 @@ ulong run(char *s) {
             game.dice %= 100;
             game.dice++;
         }
-        game.pos2--;
         game.pos2 %= 10;
-        game.pos2++;
-        game.score2 += game.pos2;
+        game.score2 += game.pos2 + (game.pos2 == 0) * 10;
         game.nrolls+=3;
         if (game.score2 >= 1000) {return (ulong)(game.score1) * game.nrolls;}
     }
