@@ -8,10 +8,11 @@ from tool.runners.python import SubmissionPy
 
 NDArrayBool = npt.NDArray[np.bool_]
 KERNEL = np.array([2 ** i for i in range(9)]).reshape((3, 3))
+N_ITER = 50
 
 
 class ThomrenSubmission(SubmissionPy):
-    def run(self, s, n_iter=2):
+    def run(self, s, n_iter=N_ITER):
         """
         :param s: input in string format
         :return: solution flag
@@ -20,7 +21,6 @@ class ThomrenSubmission(SubmissionPy):
         border = False
         for _ in range(n_iter):
             image = enhance(image, algorithm, border)
-            # pprint_image(image)
 
             if algorithm[0] and not border:
                 border = True
@@ -28,10 +28,6 @@ class ThomrenSubmission(SubmissionPy):
                 border = False
 
         return image.sum()
-
-
-def pprint_image(image):
-    print("\n".join("".join("#" if x else "." for x in line) for line in image))
 
 
 def parse_input(s: str) -> Tuple[NDArrayBool, NDArrayBool]:
@@ -53,7 +49,7 @@ def enhance(
 
 def test_thomren():
     """
-    Run `python -m pytest ./day-20/part-1/thomren.py` to test the submission.
+    Run `python -m pytest ./day-20/part-2/thomren.py` to test the submission.
     """
     assert (
         ThomrenSubmission().run(
@@ -73,5 +69,5 @@ def test_thomren():
 ..###
 """.strip()
         )
-        == 35
+        == 3351
     )
