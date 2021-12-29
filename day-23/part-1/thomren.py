@@ -70,7 +70,7 @@ def get_neighbors(state: int) -> Iterator[Tuple[int, int]]:
             for y in (
                 [
                     State.get_hallway(state, k)
-                    for k in range(min(j, t), max(j, t))
+                    for k in range(min(j, t), max(j, t) + 1)
                     if k != j
                 ]
                 + [State.get_room(state, x, 0), State.get_room(state, x, 1)]
@@ -122,10 +122,6 @@ def get_neighbors(state: int) -> Iterator[Tuple[int, int]]:
                 if State.get_hallway(state, j - p) is not None:
                     break
 
-                next_state = State.set_room(state, n, pos, None)
-                next_state = State.set_hallway(next_state, j - p, x)
-                yield (next_state, ((2 - pos) + p) * energy(x))
-
                 # try to go into the target room
                 # TODO: continue if can go to target room?
                 if j - p == t:
@@ -136,6 +132,7 @@ def get_neighbors(state: int) -> Iterator[Tuple[int, int]]:
                         next_state = State.set_room(state, n, pos, None)
                         next_state = State.set_room(next_state, x, 0, x)
                         yield (next_state, ((2 - pos) + p + 2) * energy(x))
+                        break  # not optimal not to go to the target room
                     elif (
                         State.get_room(state, x, 1) is None
                         and State.get_room(state, x, 0) == x
@@ -143,15 +140,20 @@ def get_neighbors(state: int) -> Iterator[Tuple[int, int]]:
                         next_state = State.set_room(state, n, pos, None)
                         next_state = State.set_room(next_state, x, 1, x)
                         yield (next_state, ((2 - pos) + p + 1) * energy(x))
+                        break  # not optimal not to go to the target room
+
+                if j - p in [2, 4, 6, 8]:
+                    # not optimal to stop in front of a room
+                    continue
+
+                next_state = State.set_room(state, n, pos, None)
+                next_state = State.set_hallway(next_state, j - p, x)
+                yield (next_state, ((2 - pos) + p) * energy(x))
 
             # go on the right in the hallway
             for p in range(1, 11 - j):
                 if State.get_hallway(state, j + p) is not None:
                     break
-
-                next_state = State.set_room(state, n, pos, None)
-                next_state = State.set_hallway(next_state, j + p, x)
-                yield (next_state, ((2 - pos) + p) * energy(x))
 
                 # try to go into the target room
                 # TODO: continue if can go to target room?
@@ -163,6 +165,7 @@ def get_neighbors(state: int) -> Iterator[Tuple[int, int]]:
                         next_state = State.set_room(state, n, pos, None)
                         next_state = State.set_room(next_state, x, 0, x)
                         yield (next_state, ((2 - pos) + p + 2) * energy(x))
+                        break  # not optimal not to go to the target room
                     elif (
                         State.get_room(state, x, 1) is None
                         and State.get_room(state, x, 0) == x
@@ -170,6 +173,15 @@ def get_neighbors(state: int) -> Iterator[Tuple[int, int]]:
                         next_state = State.set_room(state, n, pos, None)
                         next_state = State.set_room(next_state, x, 1, x)
                         yield (next_state, ((2 - pos) + p + 1) * energy(x))
+                        break  # not optimal not to go to the target room
+
+                if j + p in [2, 4, 6, 8]:
+                    # not optimal to stop in front of a room
+                    continue
+
+                next_state = State.set_room(state, n, pos, None)
+                next_state = State.set_hallway(next_state, j + p, x)
+                yield (next_state, ((2 - pos) + p) * energy(x))
 
 
 def heuristic(state):
