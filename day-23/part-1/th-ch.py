@@ -1,6 +1,6 @@
 from tool.runners.python import SubmissionPy
 
-from functools import cache
+from functools import lru_cache
 import heapq
 
 energy_by_amphipod = {"A": 1, "B": 10, "C": 100, "D": 1000}
@@ -19,7 +19,7 @@ class Burrow():
     def __lt__(self, other):
         return True  # just for heapq, not actually used (energy is used for comparison)
 
-    @cache
+    @lru_cache(maxsize=None)
     def is_organized(self):
         return self.__str__() == """
 #############
@@ -59,7 +59,7 @@ class Burrow():
             burrow[burrow_position] = None if amphipod == "." else amphipod
         return Burrow(tuple(burrow))
 
-    @cache
+    @lru_cache(maxsize=None)
     def __str__(self):
         template = """
 #############
@@ -75,7 +75,7 @@ class Burrow():
         return template.format(**values)
 
 
-@cache
+@lru_cache(maxsize=None)
 def get_side_room(amphipod):
     if amphipod == "A":
         return [11, 12]
@@ -90,7 +90,7 @@ def get_side_room(amphipod):
 forbidden = set([2, 4, 6, 8])
 
 
-@cache
+@lru_cache(maxsize=None)
 def get_possible_positions(burrow_pos, position, amphipod):
     sideroom = get_side_room(amphipod)
     space_right_sideroom = sideroom[0] - 9
@@ -167,7 +167,7 @@ def get_possible_positions(burrow_pos, position, amphipod):
     return sorted(next_positions, key=lambda next_position: next_position[1])
 
 
-@cache
+@lru_cache(maxsize=None)
 def compute_next_burrows(burrow):
     next_burrows = []
     for position, amphipod in enumerate(burrow):
