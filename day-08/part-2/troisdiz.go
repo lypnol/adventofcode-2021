@@ -28,19 +28,23 @@ type Translator struct {
 	trans [7]Segment
 }
 
-func (t *Translator) translater(s SegmentSet) SegmentSet {
+func (t *Translator) translate(s SegmentSet) SegmentSet {
 	var result SegmentSet
 	for i := 0; i < 7; i++ {
-		if s.get(Segment(i)) {
+		if s.isSet(Segment(i)) {
 			result.set(t.trans[i])
 		}
 	}
 	return result
 }
 
+func (t *Translator) setTranslation(from Segment, to Segment) {
+	t.trans[from] = to
+}
 
 func (sSet SegmentSet) String() string {
-	return fmt.Sprintf("[A: %v, B: %v, C: %v, D: %v, E: %v, F: %v, G: %v]", sSet.get(A), sSet.get(B), sSet.get(C), sSet.get(D), sSet.get(E), sSet.get(F), sSet.get(G))
+	//return fmt.Sprintf("[A: %v, B: %v, C: %v, D: %v, E: %v, F: %v, G: %v]", sSet.isSet(A), sSet.isSet(B), sSet.isSet(C), sSet.isSet(D), sSet.isSet(E), sSet.isSet(F), sSet.isSet(G))
+	return fmt.Sprintf("[%d%d%d%d%d%d%d]", sSet.get(A), sSet.get(B), sSet.get(C), sSet.get(D), sSet.get(E), sSet.get(F), sSet.get(G))
 }
 
 func (sSet *SegmentSet) set(s Segment) *SegmentSet {
@@ -48,18 +52,32 @@ func (sSet *SegmentSet) set(s Segment) *SegmentSet {
 	return sSet
 }
 
-func (sSet *SegmentSet) get(s Segment) bool {
+func (sSet *SegmentSet) isSet(s Segment) bool {
 	return int((sSet.val & (1 << s)) >> s) == 1
+}
+
+func (sSet *SegmentSet) get(s Segment) int {
+	return int((sSet.val & (1 << s)) >> s)
 }
 
 func (sSet *SegmentSet) getSegments() []Segment {
 	var result []Segment
 	for i := 0; i < 7; i++ {
-		if sSet.get(Segment(i)) {
+		if sSet.isSet(Segment(i)) {
 			result = append(result, Segment(i))
 		}
 	}
 	return result
+}
+
+func (sSet *SegmentSet) getSingle() Segment {
+	segments := sSet.getSegments()
+	if len(segments) == 1 {
+		return segments[0]
+	} else {
+		fmt.Printf("Cannot return single element of %v\n", *sSet)
+		return -1
+	}
 }
 
 func (sSet *SegmentSet) intersectWith(other SegmentSet) SegmentSet {
@@ -177,17 +195,85 @@ func sequenceToSegmentSlice(listOfInputSignals string, listOfOutputSignals strin
 	return display
 }
 
+func displaySegmentSet(label string, ss SegmentSet) {
+	/*
+	fmt.Printf("%7s = %v", label, ss)
+	if len(ss.getSegments()) == 1{
+		fmt.Printf(" -> %d", ss.getSingle())
+	}
+	fmt.Println()
+	 */
+}
+
 func solveOneDisplay(d *Display) int {
 	var translator Translator
 
+	cfSegS := d.input2
+	displaySegmentSet("cf", cfSegS)
+	acfSegS := d.input3
+	bcdfSegS := d.input4
+
 	// a with the 7 and the 1
-	onlySegA := d.input3.minus(d.input2)
-	translator.trans[onlySegA.getSegments()[0]] = 0
+	aSegS := acfSegS.minus(cfSegS)
+	translator.setTranslation(aSegS.getSingle(), A)
 
-	l5Common := d.input5[0].intersectWith(d.input5[1])
-	l5Common = l5Common.intersectWith(d.input5[2])
+	// a, d g common in 2, 4, 5
+	adgSegS := d.input5[0].intersectWith(d.input5[1])
+	adgSegS = adgSegS.intersectWith(d.input5[2])
 
-	return 0
+	dgSegS := adgSegS.minus(aSegS)
+	displaySegmentSet("adg", adgSegS)
+	displaySegmentSet("a", aSegS)
+	displaySegmentSet("dg", dgSegS)
+	gSegS := dgSegS.minus(bcdfSegS)
+	displaySegmentSet("g", gSegS)
+	translator.setTranslation(gSegS.getSingle(), G)
+
+	dSegS := dgSegS.minus(gSegS)
+	displaySegmentSet("d", dSegS)
+	translator.setTranslation(dSegS.getSingle(), D)
+
+	// isSet the b from the 4
+	bdSegS := bcdfSegS.minus(cfSegS)
+	bSegS := bdSegS.minus(dSegS)
+	displaySegmentSet("bcdf", bcdfSegS)
+	displaySegmentSet("bd", bdSegS)
+	displaySegmentSet("b", bSegS)
+	translator.setTranslation(bSegS.getSingle(), B)
+
+	// among 2, 3, 5: only 5 has b => deduce f
+	var nb5SegS SegmentSet
+	if d.input5[0].isSet(bSegS.getSingle()) {
+		nb5SegS = d.input5[0]
+	} else if d.input5[1].isSet(bSegS.getSingle()) {
+		nb5SegS = d.input5[1]
+	} else if d.input5[2].isSet(bSegS.getSingle()) {
+		nb5SegS = d.input5[2]
+	} else {
+		fmt.Printf("nb5 not found in :\n  - %v\n  - %v\n  - %v\n", d.input5[0], d.input5[1], d.input5[2])
+	}
+	displaySegmentSet("5[0]", d.input5[0])
+	displaySegmentSet("5[1]", d.input5[1])
+	displaySegmentSet("5[2]", d.input5[2])
+	displaySegmentSet("nb5", nb5SegS)
+	bfSegS := nb5SegS.minus(adgSegS)
+	displaySegmentSet("bf", bfSegS)
+	displaySegmentSet("b", bSegS)
+	fSegS := bfSegS.minus(bSegS)
+	translator.setTranslation(fSegS.getSingle(), F)
+
+	// deduce c from 1
+	cSegS := cfSegS.minus(fSegS)
+	translator.setTranslation(cSegS.getSingle(), C)
+
+	aegSegS := d.input7.minus(bcdfSegS)
+	eSegS := aegSegS.minus(adgSegS)
+	translator.setTranslation(eSegS.getSingle(), E)
+	digit1 := translator.translate(d.outputs[0])
+	digit2 := translator.translate(d.outputs[1])
+	digit3 := translator.translate(d.outputs[2])
+	digit4 := translator.translate(d.outputs[3])
+	return 1000 * digit1.asDisplayed() + 100 * digit2.asDisplayed() + 10 * digit3.asDisplayed() + digit4.asDisplayed()
 }
 
 func puzzle(puzzle Puzzle) int {
