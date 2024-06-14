@@ -1,33 +1,31 @@
 namespace Aoc {
     class Solution {
 
-        private static int fastIntParse(string input) {
-            int result = 0;
-            for(int idx=0; idx<input.Length; idx++){
-                result = result * 10 + (input[idx] - '0');
-            }
-            return result;
-        }
-
-        private static string solve(string input){
+        private static int solve(char[] input){
             int counter = 0;
             int previous_depth = int.MaxValue;
-            int current_depth;
-            foreach(string line in input.Split('\n')){
-                current_depth = fastIntParse(line);
-                if(current_depth > previous_depth){
-                    counter ++;
+            int current_depth = 0;
+            for(int index=0; index < input.Length; index++){
+                if (input[index] == '\n'){
+                    if (current_depth > previous_depth){
+                        counter++;
+                    }
+                    previous_depth = current_depth;
+                    current_depth = 0;
+                } else {
+                    current_depth = current_depth * 10 + (int)(input[index] - '0');
                 }
-                previous_depth = current_depth;
             }
-            return Convert.ToString(counter);
+            if (current_depth != 0 && current_depth > previous_depth) counter++;
+
+            return counter;
         }
 
         public static void Main(string[] args) {
-            string input = args[0];
+            char[] input = args[0].ToCharArray();
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
-            string result = solve(input);
+            int result = solve(input);
             watch.Stop();
             Console.WriteLine("_duration: " + watch.Elapsed.TotalMilliseconds + "\n" + result);
         }

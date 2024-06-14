@@ -6,30 +6,38 @@ namespace Aoc
 {
     class Solution
     {
-       private static string solve(string input) {
+       private static int solve(char[] input) {
             int depth = 0;
-            int horizontalPosition = 0;
+            int position = 0;
             int aim = 0;
             int offset;
-            foreach(string line in input.Split('\n')){
-                offset = line[line.Length-1] - '0';
-                if(line[0] == 'f'){
-                    horizontalPosition += offset;
-                    depth += aim * offset;
-                } else if(line[0] == 'u'){
-                    aim -= offset;
-                } else {
-                    aim += offset;
+            int cursor = 0;
+            while (cursor < input.Length) {
+                switch (input[cursor]) {
+                    case 'f':
+                        offset = (int) (input[cursor+8] - '0');
+                        position += offset;
+                        depth += aim * offset;
+                        cursor += 10;
+                        break;
+                    case 'u':
+                        aim -= (int)(input[cursor+3] - '0');
+                        cursor += 5;
+                        break;
+                    case 'd':
+                        aim += (int)(input[cursor+5] - '0');
+                        cursor += 7;
+                        break;
                 }
             }
-            return Convert.ToString(depth * horizontalPosition);
+            return depth * position;
         }
 
         public static void Main(string[] args) {
-            string input = args[0];
+            char[] input = args[0].ToCharArray();
             var watch = new System.Diagnostics.Stopwatch();
             watch.Start();
-            string result = solve(input);
+            int result = solve(input);
             watch.Stop();
             Console.WriteLine("_duration: " + watch.Elapsed.TotalMilliseconds + "\n" + result);
         }
